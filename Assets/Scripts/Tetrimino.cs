@@ -103,6 +103,7 @@ public class Tetrimino{
 	};
 	
 	int m_type_id;
+	int m_type_offset;	//	タイプ内のオフセット
 
 	public Tetrimino ()
 	{
@@ -120,10 +121,23 @@ public class Tetrimino{
 		Debug.Assert(0<=id && getTypeMax()>=id);
 
 		m_type_id = id;
+		m_type_offset = 0;	//	パターンがセットされたら初期状態にする
 
 		//	外部から直接パターンIDを指定すると齟齬が生じるが、現状ではそこまで厳密にしない
 		setPatternId(m_typeTable[m_type_id].pattern_id);
 	}
+
+	public void incrementTypeOffset()
+	{
+		m_type_offset++;
+		if( m_typeTable[m_type_id].num_patterns <= m_type_offset )
+		{
+			m_type_offset = 0;
+		}
+
+		setPatternId(m_typeTable[m_type_id].pattern_id + m_type_offset);
+	}
+
 
 
 	public void setPatternId(int id)

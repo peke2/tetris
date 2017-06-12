@@ -73,6 +73,11 @@ public class StageManager : MonoBehaviour {
 
 	void movement(int input_bit)
 	{
+		if( (input_bit & InputBase.MASK_BUTTON_A) != 0 )
+		{
+			m_tetrimino.incrementTypeOffset();
+		}
+
 		//	現在の落下ブロックで領域判定用のデータを作る
 		Tetrimino.Pattern pat = m_tetrimino.getPattern();
 		int[] patArea = new int[pat.w*pat.h];
