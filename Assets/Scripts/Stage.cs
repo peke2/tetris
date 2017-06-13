@@ -184,6 +184,27 @@ public class Stage {
 		}
 	}
 
+	/**
+	 *	
+	 */
+	//最終的にはこれに置き換える(ブロックの色指定のため)
+	public void placeBlocks(int base_x, int base_y, BlockInfo[] area, int w, int h)
+	{
+		for(int y = 0; y<h; y++)
+		{
+			for(int x = 0; x<w; x++)
+			{
+				int bx = base_x + x;
+				int by = base_y + y;
+				BlockInfo binfo = area[x+y*w];
+				if( (BLOCK_STATE.EXISTS==binfo.state) && (true == isInside(bx,by)) )
+				{
+					m_board[bx, by].state = binfo.state;
+					m_board[bx, by].color_index = binfo.color_index;
+				}
+			}
+		}
+	}
 
 	/**
 	 *	盤面の範囲内の座標か？	
