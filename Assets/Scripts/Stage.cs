@@ -52,7 +52,7 @@ public class Stage {
 		m_board_w = w;
 		m_board_h = h;
 
-		m_standby_h = 4;	//	とりあえずブロックの最大高さを直接指定
+		m_standby_h = 4;    //とりあえず、盤面の上の落下ブロック待機領域の高さを直接指定
 	}
 
 	/**
@@ -89,11 +89,12 @@ public class Stage {
 	 */
 	public void eraseLines(List<int> list)
 	{
+		List<int>   workList = new List<int>(list);
 		//	ブロックを詰めるため上のラインから消していく
-		list.Sort((a, b) => a-b);
+		workList.Sort((a, b) => b-a);	//	降順
 
 		//	念のため同じ行は除く
-		IEnumerable<int> eraseList = list.Distinct();
+		IEnumerable<int> eraseList = workList.Distinct();
 
 		int last_line_index = m_board_h-1;	//	最終ライン
 
@@ -147,13 +148,14 @@ public class Stage {
 	/**
 	 *	指定された位置にブロックはあるか？
 	 */
-	public bool existsBlockOnArea(int base_x, int base_y, int[] area, int w, int h)
+	//public bool existsBlockOnArea(int base_x, int base_y, int[] area, int w, int h)
+	public bool existsBlockOnArea(int base_x, int base_y, BlockInfo[] area, int w, int h)
 	{
 		for(int y=0; y<h; y++)
 		{
 			for(int x=0; x<w; x++)
 			{
-				if( 0!=area[x+y*w] )
+				if( BLOCK_STATE.NONE != area[x+y*w].state )
 				{
 					//	1つでもブロックがあれば終了
 					if(true == existsBlock(base_x + x, base_y + y)) return true;
@@ -168,6 +170,7 @@ public class Stage {
 	/**
 	 *	指定された位置にブロックを配置する
 	 */
+	 /*
 	public void placeBlocks(int base_x, int base_y, int[] area, int w, int h)
 	{
 		for(int y = 0; y<h; y++)
@@ -182,7 +185,7 @@ public class Stage {
 				}
 			}
 		}
-	}
+	}*/
 
 	/**
 	 *	
@@ -197,11 +200,28 @@ public class Stage {
 				int bx = base_x + x;
 				int by = base_y + y;
 				BlockInfo binfo = area[x+y*w];
+				//	ブロックが存在するときのみ配置
+				//	(指定されたデータ内の「ブロック無し」は透明扱いで配置しない)
 				if( (BLOCK_STATE.EXISTS==binfo.state) && (true == isInside(bx,by)) )
 				{
 					m_board[bx, by].state = binfo.state;
 					m_board[bx, by].color_index = binfo.color_index;
 				}
+			}
+		}
+	}
+
+	/**
+	 *	盤面をクリア
+	 */
+	public void clearAllBlocks()
+	{
+		for(int y=0; y<m_board_h; y++)
+		{
+			for(int x=0; x<m_board_w; x++)
+			{
+				m_board[x, y].state = BLOCK_STATE.NONE;
+				m_board[x, y].color_index = 0;
 			}
 		}
 	}

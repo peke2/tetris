@@ -11,8 +11,10 @@ public class StageManager : MonoBehaviour {
 	InputBase   m_input;
 	Generator   m_generator;
 
-	const int DROP_INTERVAL = 10;   //	落下間隔(フレーム数)
+	const int DROP_INTERVAL = 15;   //	落下間隔(フレーム数)
+	const int FIX_INTERVAL = 30;   //	固定までの間隔(フレーム数)
 	int m_drop_interval;
+	int m_fix_interval;
 
 	int m_stage_w;
 	int m_stage_h;
@@ -40,7 +42,8 @@ public class StageManager : MonoBehaviour {
 	void Start ()
 	{
 		m_input = new InputPad();
-		m_drop_interval = 0;
+		m_drop_interval = DROP_INTERVAL;
+		m_fix_interval = 0;
 
 		//	落下するブロックのIDを更新
 		updateDropTypeId();
@@ -50,8 +53,9 @@ public class StageManager : MonoBehaviour {
 	void Update () {
 		m_input.update();
 
-		int input_bit = m_input.getButtonEdgeBit();
-		movement(input_bit);
+		int input_bit = m_input.getButtonBit();
+		int input_edge_bit = m_input.getButtonEdgeBit();
+		movement(input_bit, input_edge_bit);
 	}
 
 	/**
@@ -71,29 +75,34 @@ public class StageManager : MonoBehaviour {
 	}
 
 
-	void movement(int input_bit)
+	void movement(int input_bit, int input_edge_bit)
 	{
-		if( (input_bit & InputBase.MASK_BUTTON_A) != 0 )
+		if( (input_edge_bit & InputBase.MASK_BUTTON_A) != 0 )
 		{
 			m_tetrimino.incrementTypeOffset();
 		}
 
 		//	現在の落下ブロックで領域判定用のデータを作る
 		Tetrimino.Pattern pat = m_tetrimino.getPattern();
-		int[] patArea = new int[pat.w*pat.h];
+		//int[] patArea = new int[pat.w*pat.h];
+		Stage.BlockInfo[] patArea = new Stage.BlockInfo[pat.w*pat.h];
 		for(int y = 0; y<pat.h; y++)
 		{
 			for(int x = 0; x<pat.w; x++)
 			{
 				int index = x + y * pat.w;
+				Stage.BlockInfo binfo = new Stage.BlockInfo();
 				if('1' == pat.pat[index])
 				{
-					patArea[index] = 1;
+					binfo.state = Stage.BLOCK_STATE.EXISTS;
+					binfo.color_index = m_tetrimino.getColorIndex();
 				}
 				else
 				{
-					patArea[index] = 0;
+					binfo.state = Stage.BLOCK_STATE.NONE;
+					binfo.color_index = 0;
 				}
+				patArea[index] = binfo;
 			}
 		}
 
@@ -104,11 +113,11 @@ public class StageManager : MonoBehaviour {
 		posy = m_tetrimino.getPosY();
 
 		add_x = 0;
-		if((input_bit & InputBase.MASK_LEFT) != 0)
+		if((input_edge_bit & InputBase.MASK_LEFT) != 0)
 		{
 			add_x = -1;
 		}
-		else if((input_bit & InputBase.MASK_RIGHT) != 0)
+		else if((input_edge_bit & InputBase.MASK_RIGHT) != 0)
 		{
 			add_x = 1;
 		}
@@ -119,10 +128,16 @@ public class StageManager : MonoBehaviour {
 			posx += add_x;
 		}
 
-		m_drop_interval++;
-		if( DROP_INTERVAL <= m_drop_interval )
+		//	下を押している間は追加で落下間隔を減らす
+		if( (input_bit & InputBase.MASK_DOWN) != 0 )
 		{
-			m_drop_interval = 0;
+			m_drop_interval--;
+		}
+
+		m_drop_interval--;
+		if( 0 >= m_drop_interval )
+		{
+			m_drop_interval = DROP_INTERVAL;
 
 			//	移動先にブロックが無ければ落下
 			if(false == m_stage.existsBlockOnArea(posx, posy-1, patArea, pat.w, pat.h))

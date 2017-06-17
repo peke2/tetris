@@ -34,7 +34,8 @@ public class Tetrimino{
 	public int getPosX() { return m_pos_x; }
 	public int getPosY() { return m_pos_y; }
 
-
+	//	描画時に「下から順番」に描画されるので、実際に表示される際のパターンは上下逆になる
+	//	データの判定を考える際に注意！
 	Pattern[] patternTable = new Pattern[]{
 		//--------
 		new Pattern(3,3,"010010011"),
@@ -76,6 +77,7 @@ public class Tetrimino{
 		new Pattern(2,2,"1111"),
 	};
 
+	//	種類の定義
 	struct Type
 	{
 		int m_pattern_id;
@@ -102,7 +104,7 @@ public class Tetrimino{
 		new Type(24, 1),
 	};
 	
-	int m_type_id;
+	int m_type_id;		//	パターンを種類で分類したときのID
 	int m_type_offset;	//	タイプ内のオフセット
 
 	public Tetrimino ()
@@ -116,6 +118,22 @@ public class Tetrimino{
 		return m_typeTable.Length-1;
 	}
 
+	public int getTypeId()
+	{
+		return m_type_id;
+	}
+
+	public int getColorIndex()
+	{
+		//	色のインデックスは「0」が無色
+		//	パターンIDの開始とは異なるので関数を経由して取得するようにする
+		return m_type_id+1;
+	}
+
+	/**
+	 *	種類のIDをセット
+	 *	(パターンを種類として分類されたものを指定)
+	 */
 	public void setTypeId(int id)
 	{
 		Debug.Assert(0<=id && getTypeMax()>=id);
@@ -139,7 +157,10 @@ public class Tetrimino{
 	}
 
 
-
+	/**
+	 *	パターンIDをセット
+	 *	ブロックのパターンをIDで指定
+	 */
 	public void setPatternId(int id)
 	{
 		int max_id = getMaxPatternId();

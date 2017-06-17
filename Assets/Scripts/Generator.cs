@@ -30,7 +30,8 @@ public class Generator
 
 		for(int i = 0; i<size; i++)
 		{
-			m_table[i] = Random.Range(m_min_index, m_max_index+1);
+			//m_table[i] = Random.Range(m_min_index, m_max_index+1);
+			m_table[i] = i % ((m_max_index+1) - m_min_index) + m_min_index;	//	順番
 		}
 	}
 

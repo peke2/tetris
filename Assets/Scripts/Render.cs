@@ -14,6 +14,22 @@ public class Render : MonoBehaviour {
 
 	int m_test_wait_count = 0;
 
+	const int LAYER_BOARD = 0;
+	const int LAYER_DROP = 1;
+
+	Color[] m_colorList = new Color[]
+	{
+		new Color(1,1,1,1),
+
+		new Color(1,0.8f,0.2f,1),
+		new Color(0.2f,0.2f,1,1),
+		new Color(0.2f,1,0.2f,1),
+		new Color(1,0.2f,1,1),
+		new Color(0.2f,1,1,1),
+		new Color(1,0.2f,0.2f,1),
+		new Color(1,1,0.2f,1),
+	};
+
 
 	// Use this for initialization
 	void Start ()
@@ -30,6 +46,7 @@ public class Render : MonoBehaviour {
 		for(int i = 0; i<4; i++)
 		{
 			m_minoBlocks[i] = Instantiate(tetrisBlock);
+			m_minoBlocks[i].GetComponent<SpriteRenderer>().sortingOrder = LAYER_DROP;
 		}
 	}
 
@@ -60,11 +77,15 @@ public class Render : MonoBehaviour {
 				if(Stage.BLOCK_STATE.EXISTS == board[x, y].state)
 				{
 					block = Instantiate(tetrisBlock);
+					block.GetComponent<Renderer>().material.color = m_colorList[board[x,y].color_index];
+
 					m_blocks[index] = block;
 				}
 				else if(Stage.BLOCK_STATE.NONE == board[x, y].state)
 				{
 					block = Instantiate(boardBlank);
+					//block.GetComponent<Renderer>().material.color = new Color(1,1,1,1);
+
 					m_blocks[index] = block;
 				}
 				if(null != block)
@@ -97,7 +118,10 @@ public class Render : MonoBehaviour {
 				{
 					float posx = x + base_x;
 					float posy = y + base_y;
-					blocks[num_blocks].transform.position = new Vector3(posx, posy, 0);
+					GameObject blk = blocks[num_blocks];
+					blk.transform.position = new Vector3(posx, posy, 0);
+					blk.GetComponent<Renderer>().material.color = m_colorList[tetrimino.getColorIndex()];
+					
 					num_blocks++;
 				}
 
