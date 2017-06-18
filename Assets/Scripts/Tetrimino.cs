@@ -4,21 +4,65 @@ using UnityEngine;
 
 public class Tetrimino{
 
-	public struct Pattern
+	public class Pattern
 	{
 		int		m_w, m_h;
 		string	m_pat;
+
+		public struct Rect
+		{
+			public int x0, y0;
+			public int x1, y1;
+		}
+		
+		Rect m_rect;
 
 		public Pattern(int w, int h, string pat)
 		{
 			m_w = w;
 			m_h = h;
 			m_pat = pat;
+
+			calcRect();
 		}
 
 		public int w { get { return m_w; } }
 		public int h { get { return m_h; } }
 		public string pat { get { return m_pat; } }
+		public Rect rect { get { return m_rect; } }
+
+
+		private void calcRect()
+		{
+			int min_x, min_y;
+			int max_x, max_y;
+
+			min_x = int.MaxValue;
+			min_y = int.MaxValue;
+			max_x = 0;
+			max_y = 0;
+
+			for(int y=0; y<m_h; y++)
+			{
+				for(int x=0; x<m_w; x++)
+				{
+					int index = x + y * m_w;
+					if( '1' == m_pat[index] )
+					{
+						if(x < min_x) min_x = x;
+						else if(x > max_x) max_x = x;
+						if(y < min_y) min_y = y;
+						else if(y > max_y) max_y = y;
+					}
+				}
+			}
+
+			m_rect.x0 = min_x;
+			m_rect.y0 = min_y;
+			m_rect.x1 = max_x;
+			m_rect.y1 = max_y;
+		}
+
 	}
 
 	int m_pattern_id;
@@ -145,12 +189,27 @@ public class Tetrimino{
 		setPatternId(m_typeTable[m_type_id].pattern_id);
 	}
 
-	public void incrementTypeOffset()
+
+	/**
+	 *	種類のオフセットを加算(回転)
+	 */
+	public void addTypeOffset(int addition)
 	{
-		m_type_offset++;
-		if( m_typeTable[m_type_id].num_patterns <= m_type_offset )
+		m_type_offset += addition;
+
+		if( addition >= 0 )
 		{
-			m_type_offset = 0;
+			if(m_typeTable[m_type_id].num_patterns <= m_type_offset)
+			{
+				m_type_offset = 0;
+			}
+		}
+		else
+		{
+			if(0 > m_type_offset)
+			{
+				m_type_offset = m_typeTable[m_type_id].num_patterns - 1;
+			}
 		}
 
 		setPatternId(m_typeTable[m_type_id].pattern_id + m_type_offset);
@@ -185,6 +244,69 @@ public class Tetrimino{
 	public Pattern getPattern()
 	{
 		return patternTable[m_pattern_id];
+	}
+
+
+
+	public struct Pos
+	{
+		public int x;
+		public int y;
+
+		public Pos(int x, int y)
+		{
+			this.x = x;
+			this.y = y;
+		}
+	}
+
+	/**
+	 *	パターン配置チェック用のオフセットを計算
+	 */
+	static public List<Pos> calcOffset(Pattern beforePat, Pattern afterPat)
+	{
+		Pattern.Rect beforeRect, afterRect;
+		beforeRect = beforePat.rect;
+		afterRect = afterPat.rect;
+
+		List<Pos> offsetList = new List<Pos>();
+
+		//	前の状態から広がる場合にずらしてチェックする
+		if(afterRect.x0 < beforeRect.x0)
+		{
+			int cnt = Mathf.Abs(afterRect.x0 - beforeRect.x0);
+			for(int i=1; i<=cnt; i++)
+			{
+				offsetList.Add(new Pos(i, 0));
+			}
+		}
+		if(afterRect.x1 > beforeRect.x1)
+		{
+			int cnt = afterRect.x1 - beforeRect.x1;
+			for(int i=1; i<=cnt; i++)
+			{
+				offsetList.Add(new Pos(-i, 0));
+			}
+		}
+
+		if(afterRect.y0 < beforeRect.y0)
+		{
+			int cnt = Mathf.Abs(afterRect.y0 - beforeRect.y0);
+			for(int i=1; i<=cnt; i++)
+			{
+				offsetList.Add(new Pos(0, i));
+			}
+		}
+		if(afterRect.y1 > beforeRect.y1)
+		{
+			int cnt = afterRect.y1 - beforeRect.y1;
+			for(int i=1; i<=cnt; i++)
+			{
+				offsetList.Add(new Pos(0, -i));
+			}
+		}
+
+		return offsetList;
 	}
 
 }

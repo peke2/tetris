@@ -15,7 +15,9 @@ public class InputPad : InputBase {
 	{
 		float h = Input.GetAxisRaw("Horizontal");
 		float v = Input.GetAxisRaw("Vertical");
-		bool a = Input.GetButtonDown("Fire1");
+		bool btn_a = Input.GetButtonDown("Fire1");
+		bool btn_b = Input.GetButtonDown("Fire2");
+		bool btn_c = Input.GetButtonDown("Fire3");
 
 		m_input_bit_prev = m_input_bit;
 		m_input_bit = 0;
@@ -32,7 +34,9 @@ public class InputPad : InputBase {
 			else		m_input_bit |= MASK_DOWN;
 		}
 
-		if(true == a) m_input_bit |= MASK_BUTTON_A;
+		if(true == btn_a) m_input_bit |= MASK_BUTTON_A;
+		if(true == btn_b) m_input_bit |= MASK_BUTTON_B;
+		if(true == btn_c) m_input_bit |= MASK_BUTTON_C;
 
 	}
 

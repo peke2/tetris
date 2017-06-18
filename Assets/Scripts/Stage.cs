@@ -32,14 +32,19 @@ public class Stage {
 	//盤面は配列よりもリストで管理した方が、ライン消去時に高速で処理できる？
 	BlockInfo[,] m_board;
 	int m_board_w, m_board_h;
-	int m_standby_h;	//	落下ブロックの待機分高さ割り増し
+	int m_board_height_margin;	//	ステージのプレイ可能高さマージン(ブロック落下位置までのはみだしに対応するため)
 
-	public Stage(int w, int h)
+	public Stage(int w, int h, int height_margin=4)
 	{
-		m_board = new BlockInfo[w, h];
-		for(int y = 0; y<h; y++)
+		m_board_height_margin = height_margin;
+
+		m_board_w = w;
+		m_board_h = h + m_board_height_margin;  //	盤面はプレイ可能高さ上限を含めて確保
+
+		m_board = new BlockInfo[m_board_w, m_board_h];
+		for(int y = 0; y<m_board_h; y++)
 		{
-			for(int x = 0; x<w; x++)
+			for(int x = 0; x<m_board_w; x++)
 			{
 				BlockInfo binfo = new BlockInfo();
 				binfo.state = BLOCK_STATE.NONE;
@@ -49,10 +54,6 @@ public class Stage {
 
 			}
 		}
-		m_board_w = w;
-		m_board_h = h;
-
-		m_standby_h = 4;    //とりあえず、盤面の上の落下ブロック待機領域の高さを直接指定
 	}
 
 	/**
@@ -134,7 +135,7 @@ public class Stage {
 	public bool existsBlock(int x, int y)
 	{
 		//	盤面に入る前のエリアではブロックの判定はしない
-		if(true == isStandbyArea(x, y)) return false;
+		if(true == isMarginArea(x, y)) return false;
 		
 		//	盤面の範囲内でなければブロックが全部埋まっているイメージ
 		if(false == isInside(x, y)) return true;
@@ -148,7 +149,6 @@ public class Stage {
 	/**
 	 *	指定された位置にブロックはあるか？
 	 */
-	//public bool existsBlockOnArea(int base_x, int base_y, int[] area, int w, int h)
 	public bool existsBlockOnArea(int base_x, int base_y, BlockInfo[] area, int w, int h)
 	{
 		for(int y=0; y<h; y++)
@@ -170,27 +170,6 @@ public class Stage {
 	/**
 	 *	指定された位置にブロックを配置する
 	 */
-	 /*
-	public void placeBlocks(int base_x, int base_y, int[] area, int w, int h)
-	{
-		for(int y = 0; y<h; y++)
-		{
-			for(int x = 0; x<w; x++)
-			{
-				int bx = base_x + x;
-				int by = base_y + y;
-				if( (0!=area[x+y*w]) && (true == isInside(bx,by)) )
-				{
-					m_board[bx, by].state = BLOCK_STATE.EXISTS;
-				}
-			}
-		}
-	}*/
-
-	/**
-	 *	
-	 */
-	//最終的にはこれに置き換える(ブロックの色指定のため)
 	public void placeBlocks(int base_x, int base_y, BlockInfo[] area, int w, int h)
 	{
 		for(int y = 0; y<h; y++)
@@ -240,10 +219,10 @@ public class Stage {
 	/**
 	 *	待機領域内の座標か？
 	 */
-	public bool isStandbyArea(int x, int y)
+	public bool isMarginArea(int x, int y)
 	{
 		if((0<=x && m_board_w>x)
-		 && (m_board_h<=y && m_board_h+m_standby_h>y)) return true;
+		 && (m_board_h<=y && m_board_h+m_board_height_margin>y)) return true;
 
 		return false;
 	}
@@ -266,5 +245,10 @@ public class Stage {
 	public int getBoardHeight()
 	{
 		return m_board_h;
+	}
+
+	public int getBoardHeightMargin()
+	{
+		return m_board_height_margin;
 	}
 }

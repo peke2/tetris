@@ -6,7 +6,6 @@ public class StageManager : MonoBehaviour {
 
 	Tetrimino   m_tetrimino;
 
-	//public GameObject  tetrisBlock;
 	Stage       m_stage;
 	InputBase   m_input;
 	Generator   m_generator;
@@ -20,6 +19,8 @@ public class StageManager : MonoBehaviour {
 	int m_stage_h;
 
 	int m_drop_serial;
+
+	bool m_is_game_over;
 
 	void Awake()
 	{
@@ -45,17 +46,23 @@ public class StageManager : MonoBehaviour {
 		m_drop_interval = DROP_INTERVAL;
 		m_fix_interval = 0;
 
+		m_is_game_over = false;
+
 		//	落下するブロックのIDを更新
 		updateDropTypeId();
 	}
 	
 	// Update is called once per frame
-	void Update () {
-		m_input.update();
+	void Update ()
+	{
+		if(false ==  m_is_game_over)
+		{
+			m_input.update();
 
-		int input_bit = m_input.getButtonBit();
-		int input_edge_bit = m_input.getButtonEdgeBit();
-		movement(input_bit, input_edge_bit);
+			int input_bit = m_input.getButtonBit();
+			int input_edge_bit = m_input.getButtonEdgeBit();
+			movement(input_bit, input_edge_bit);
+		}
 	}
 
 	/**
@@ -74,17 +81,21 @@ public class StageManager : MonoBehaviour {
 		m_tetrimino.setPos(m_stage_w/2, m_stage_h);
 	}
 
-
-	void movement(int input_bit, int input_edge_bit)
+	/**
+	 *	ゲームオーバーに相当する座標か？
+	 */
+	bool isGameOverPosition()
 	{
-		if( (input_edge_bit & InputBase.MASK_BUTTON_A) != 0 )
-		{
-			m_tetrimino.incrementTypeOffset();
-		}
+		if(m_stage_h == m_tetrimino.getPosY()) return true;
+		return false;
+	}
 
-		//	現在の落下ブロックで領域判定用のデータを作る
-		Tetrimino.Pattern pat = m_tetrimino.getPattern();
-		//int[] patArea = new int[pat.w*pat.h];
+	/**
+	 *	判定用のブロック状態を作成
+	 */
+	Stage.BlockInfo[] createPatternArea(Tetrimino tetrimino)
+	{
+		Tetrimino.Pattern pat = tetrimino.getPattern();
 		Stage.BlockInfo[] patArea = new Stage.BlockInfo[pat.w*pat.h];
 		for(int y = 0; y<pat.h; y++)
 		{
@@ -95,7 +106,7 @@ public class StageManager : MonoBehaviour {
 				if('1' == pat.pat[index])
 				{
 					binfo.state = Stage.BLOCK_STATE.EXISTS;
-					binfo.color_index = m_tetrimino.getColorIndex();
+					binfo.color_index = tetrimino.getColorIndex();
 				}
 				else
 				{
@@ -105,6 +116,35 @@ public class StageManager : MonoBehaviour {
 				patArea[index] = binfo;
 			}
 		}
+		return patArea;
+	}
+
+
+	/**
+	 *	落下ブロックの移動
+	 */
+	void movement(int input_bit, int input_edge_bit)
+	{
+		Tetrimino.Pattern prevPat = m_tetrimino.getPattern();
+		int rot_offset = 0;
+
+		if( (input_edge_bit & InputBase.MASK_BUTTON_A) != 0 )
+		{
+			rot_offset = 1;
+		}
+		else if((input_edge_bit & InputBase.MASK_BUTTON_B) != 0)
+		{
+			rot_offset = -1;
+		}
+
+		if( rot_offset != 0 )
+		{
+			m_tetrimino.addTypeOffset(rot_offset);
+		}
+
+		//	現在の落下ブロックで領域判定用のデータを作る
+		Tetrimino.Pattern pat = m_tetrimino.getPattern();
+		Stage.BlockInfo[] patArea = createPatternArea(m_tetrimino);
 
 		//	入力に合わせて座標移動
 		int posx, posy;
@@ -127,6 +167,37 @@ public class StageManager : MonoBehaviour {
 		{
 			posx += add_x;
 		}
+		else
+		{
+			//	回転があって、かつブロックが重なる場合のみ座標をずらして再試行する
+			if( rot_offset != 0 )
+			{
+				//	現在のブロックが入る箇所を探す
+				List<Tetrimino.Pos> offsetList;
+				offsetList = Tetrimino.calcOffset(prevPat, pat);
+				bool is_rotated = false;
+
+				foreach(Tetrimino.Pos offset in offsetList)
+				{
+					//	回転後の領域にブロックが無ければ回転は完了
+					if(false == m_stage.existsBlockOnArea(posx+offset.x, posy+offset.y, patArea, pat.w, pat.h))
+					{
+						posx += offset.x;
+						posy += offset.y;
+						is_rotated = true;
+						break;
+					}
+				}
+				if( false == is_rotated )
+				{
+					//	逆方向に回転させて回転を取り消す
+					m_tetrimino.addTypeOffset(-rot_offset);
+					//	再度パターンを作り直す
+					pat = m_tetrimino.getPattern();
+					patArea = createPatternArea(m_tetrimino);
+				}
+			}
+		}
 
 		//	下を押している間は追加で落下間隔を減らす
 		if( (input_bit & InputBase.MASK_DOWN) != 0 )
@@ -146,6 +217,12 @@ public class StageManager : MonoBehaviour {
 			}
 			else
 			{
+				//	ブロックが重なる状態でゲームオーバーに相当する座標ならゲームオーバー
+				if( true == isGameOverPosition() )
+				{
+					m_is_game_over = true;
+				}
+				
 				//	盤面に置く
 				m_stage.placeBlocks(posx, posy, patArea, pat.w, pat.h);
 				
@@ -179,4 +256,10 @@ public class StageManager : MonoBehaviour {
 	{
 		return m_tetrimino;
 	}
+
+	public bool isGameOver()
+	{
+		return m_is_game_over;
+	}
+
 }

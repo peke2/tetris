@@ -9,6 +9,9 @@ public class Render : MonoBehaviour {
 	GameObject[]  m_blocks;
 	GameObject[]  m_minoBlocks;
 
+	public GameObject   gameOverText;
+	GameObject          m_gameOverText;
+
 	Stage m_stage;
 	Tetrimino m_tetrimino;
 
@@ -16,6 +19,8 @@ public class Render : MonoBehaviour {
 
 	const int LAYER_BOARD = 0;
 	const int LAYER_DROP = 1;
+
+	bool m_is_game_over;
 
 	Color[] m_colorList = new Color[]
 	{
@@ -48,18 +53,30 @@ public class Render : MonoBehaviour {
 			m_minoBlocks[i] = Instantiate(tetrisBlock);
 			m_minoBlocks[i].GetComponent<SpriteRenderer>().sortingOrder = LAYER_DROP;
 		}
+
+		//	ゲームオーバーテキスト
+		m_gameOverText = Instantiate(gameOverText);
+		m_gameOverText.active = false;
+		m_is_game_over = false;
 	}
 
 	// Update is called once per frame
-	void Update () {
+	void Update ()
+	{
 		drawBoard(m_stage);
 		drawTetrimino(m_tetrimino, m_minoBlocks);
+
+		if( true == GetComponent<StageManager>().isGameOver() )
+		{
+			m_gameOverText.active = true;
+		}
 	}
 
 	void drawBoard(Stage stage)
 	{
 		int	w = stage.getBoardWidth();
 		int h = stage.getBoardHeight();
+		int h_margin = stage.getBoardHeightMargin();
 		Stage.BlockInfo[,]  board = stage.getBlockInfo();
 
 		for(int y = 0; y<h; y++)
@@ -81,7 +98,7 @@ public class Render : MonoBehaviour {
 
 					m_blocks[index] = block;
 				}
-				else if(Stage.BLOCK_STATE.NONE == board[x, y].state)
+				else if( (Stage.BLOCK_STATE.NONE == board[x, y].state) && (y<h-h_margin) )	//	マージンにはブランクを描画しない
 				{
 					block = Instantiate(boardBlank);
 					//block.GetComponent<Renderer>().material.color = new Color(1,1,1,1);
