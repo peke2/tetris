@@ -2,31 +2,43 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class StageManager: MonoBehaviour {
-	/*
-		Tetrimino   m_tetrimino;
+/**
+ *	テトリスの制御
+ */
+public class Tetris
+{
+	Tetrimino   m_tetrimino;
 
-		Stage       m_stage;
-		InputBase   m_input;
-		Generator   m_generator;
+	Stage       m_stage;
+	InputBase   m_input;
+	Generator   m_generator;
 
-		const int DROP_INTERVAL = 15;   //	落下間隔(フレーム数)
-		const int FIX_INTERVAL = 30;   //	固定までの間隔(フレーム数)
-		int m_drop_interval;
-		int m_fix_interval;
+	const int DROP_INTERVAL = 15;   //	落下間隔(フレーム数)
+	const int FIX_INTERVAL = 30;   //	固定までの間隔(フレーム数)
+	int m_drop_interval;
+	int m_fix_interval;
 
-		int m_stage_w;
-		int m_stage_h;
+	int m_stage_w;
+	int m_stage_h;
 
-		int m_drop_serial;
+	int m_drop_serial;
 
-		bool m_is_game_over;
-	*/
-	List<Tetris>    m_tetrisList;
+	bool m_is_game_over;
 
-	void Awake()
+
+	/**
+	 *	通常のプレイ用インスタンスを作成
+	 */
+	public static Tetris CreateGamePlay()
 	{
-		/*
+		Tetris tetris;
+		tetris = new Tetris(10, 20);
+		return tetris;
+	}
+
+
+	public Tetris(int stage_w, int stage_h)
+	{
 		m_stage_w = 10;
 		m_stage_h = 20;
 		m_stage = new Stage(m_stage_w, m_stage_h);
@@ -37,20 +49,11 @@ public class StageManager: MonoBehaviour {
 		int min_index = 0;
 		int max_index = m_tetrimino.getTypeMax();
 
+		//[todo]	外部から割り当てられるようにする	ファクトリで
 		m_generator = new Generator(min_index, max_index);
 		m_drop_serial = 0;
-		*/
 
-		m_tetrisList = new List<Tetris>();
-
-		Tetris tetris = Tetris.CreateGamePlay();
-		m_tetrisList.Add(tetris);
-	}
-
-	// Use this for initialization
-	void Start()
-	{
-		/*
+		//[todo]	外部から割り当てられるようにする	ファクトリで
 		m_input = new InputPad();
 		m_drop_interval = DROP_INTERVAL;
 		m_fix_interval = 0;
@@ -59,13 +62,11 @@ public class StageManager: MonoBehaviour {
 
 		//	落下するブロックのIDを更新
 		updateDropTypeId();
-		*/
 	}
 
 	// Update is called once per frame
-	void Update()
+	public void update()
 	{
-		/*
 		if(false ==  m_is_game_over)
 		{
 			m_input.update();
@@ -74,20 +75,8 @@ public class StageManager: MonoBehaviour {
 			int input_edge_bit = m_input.getButtonEdgeBit();
 			movement(input_bit, input_edge_bit);
 		}
-		*/
-		foreach(Tetris tetris in m_tetrisList)
-		{
-			tetris.update();
-		}
 	}
 
-
-	public List<Tetris> tetrisList
-	{
-		get { return m_tetrisList; }
-	}
-
-#if false
 	/**
 	 *	落下するブロックのIDを更新
 	 */
@@ -151,7 +140,7 @@ public class StageManager: MonoBehaviour {
 		Tetrimino.Pattern prevPat = m_tetrimino.getPattern();
 		int rot_offset = 0;
 
-		if( (input_edge_bit & InputBase.MASK_BUTTON_A) != 0 )
+		if((input_edge_bit & InputBase.MASK_BUTTON_A) != 0)
 		{
 			rot_offset = 1;
 		}
@@ -160,7 +149,7 @@ public class StageManager: MonoBehaviour {
 			rot_offset = -1;
 		}
 
-		if( rot_offset != 0 )
+		if(rot_offset != 0)
 		{
 			m_tetrimino.addTypeOffset(rot_offset);
 		}
@@ -186,14 +175,14 @@ public class StageManager: MonoBehaviour {
 		}
 
 		//	移動先にブロックが無ければ座標を更新
-		if( false == m_stage.existsBlockOnArea(posx+add_x, posy, patArea, pat.w, pat.h) )
+		if(false == m_stage.existsBlockOnArea(posx+add_x, posy, patArea, pat.w, pat.h))
 		{
 			posx += add_x;
 		}
 		else
 		{
 			//	回転があって、かつブロックが重なる場合のみ座標をずらして再試行する
-			if( rot_offset != 0 )
+			if(rot_offset != 0)
 			{
 				//	現在のブロックが入る箇所を探す
 				List<Tetrimino.Pos> offsetList;
@@ -211,7 +200,7 @@ public class StageManager: MonoBehaviour {
 						break;
 					}
 				}
-				if( false == is_rotated )
+				if(false == is_rotated)
 				{
 					//	逆方向に回転させて回転を取り消す
 					m_tetrimino.addTypeOffset(-rot_offset);
@@ -223,13 +212,13 @@ public class StageManager: MonoBehaviour {
 		}
 
 		//	下を押している間は追加で落下間隔を減らす
-		if( (input_bit & InputBase.MASK_DOWN) != 0 )
+		if((input_bit & InputBase.MASK_DOWN) != 0)
 		{
 			m_drop_interval--;
 		}
 
 		m_drop_interval--;
-		if( 0 >= m_drop_interval )
+		if(0 >= m_drop_interval)
 		{
 			m_drop_interval = DROP_INTERVAL;
 
@@ -241,14 +230,14 @@ public class StageManager: MonoBehaviour {
 			else
 			{
 				//	ブロックが重なる状態でゲームオーバーに相当する座標ならゲームオーバー
-				if( true == isGameOverPosition() )
+				if(true == isGameOverPosition())
 				{
 					m_is_game_over = true;
 				}
-				
+
 				//	盤面に置く
 				m_stage.placeBlocks(posx, posy, patArea, pat.w, pat.h);
-				
+
 				//	落下ブロックは開始位置へ
 				initTetriminoStartPosition();
 
@@ -284,5 +273,5 @@ public class StageManager: MonoBehaviour {
 	{
 		return m_is_game_over;
 	}
-#endif
+
 }

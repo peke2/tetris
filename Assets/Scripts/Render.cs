@@ -12,15 +12,13 @@ public class Render : MonoBehaviour {
 	public GameObject   gameOverText;
 	GameObject          m_gameOverText;
 
-	Stage m_stage;
-	Tetrimino m_tetrimino;
+	//Stage m_stage;
+	List<Tetris>    m_tetrislist;
 
-	int m_test_wait_count = 0;
+	//int m_test_wait_count = 0;
 
 	const int LAYER_BOARD = 0;
 	const int LAYER_DROP = 1;
-
-	bool m_is_game_over;
 
 	Color[] m_colorList = new Color[]
 	{
@@ -40,12 +38,16 @@ public class Render : MonoBehaviour {
 	void Start ()
 	{
 		StageManager    stgMngr = GetComponent<StageManager>();
-		m_stage = stgMngr.getStage();
-		int w = m_stage.getBoardWidth();
-		int h = m_stage.getBoardHeight();
-		m_blocks = new GameObject[w*h];
+		m_tetrislist = stgMngr.tetrisList;
 
-		m_tetrimino = stgMngr.getTetrimino();
+		Tetris tetris = m_tetrislist[0];    //[todo]	後で複数の参照に切り替える(今は先頭の要素1つのみを固定で参照)
+		Stage stage = tetris.getStage();
+
+		//[todo]	必要なリソースを必要な分だけ作る
+
+		int w = stage.getBoardWidth();
+		int h = stage.getBoardHeight();
+		m_blocks = new GameObject[w*h];
 
 		m_minoBlocks = new GameObject[4];
 		for(int i = 0; i<4; i++)
@@ -56,19 +58,19 @@ public class Render : MonoBehaviour {
 
 		//	ゲームオーバーテキスト
 		m_gameOverText = Instantiate(gameOverText);
-		m_gameOverText.active = false;
-		m_is_game_over = false;
+		m_gameOverText.SetActive(false);
 	}
 
 	// Update is called once per frame
 	void Update ()
 	{
-		drawBoard(m_stage);
-		drawTetrimino(m_tetrimino, m_minoBlocks);
+		Tetris tetris = m_tetrislist[0];	//[todo]	リスト登録分の参照に変更する
+		drawBoard(tetris.getStage());
+		drawTetrimino(tetris.getTetrimino(), m_minoBlocks);
 
-		if( true == GetComponent<StageManager>().isGameOver() )
+		if( true == tetris.isGameOver() )
 		{
-			m_gameOverText.active = true;
+			m_gameOverText.SetActive(true);
 		}
 	}
 

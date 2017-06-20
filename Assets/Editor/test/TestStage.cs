@@ -109,8 +109,7 @@ public class TestStage {
 
 		int block_w = 6;
 		int block_h = 10;
-		Stage.BlockInfo[] area;
-
+		
 		int[] blocks = new int[]{
 			1,1,0,0,1,0,
 			1,0,0,0,0,0,
@@ -198,7 +197,6 @@ public class TestStage {
 
 		int block_w = 6;
 		int block_h = 10;
-		Stage.BlockInfo[] area;
 		int[] blocks;
 
 		blocks = new int[]{
@@ -226,7 +224,6 @@ public class TestStage {
 		stg.eraseLines(eraseLines);
 
 		Stage.BlockInfo[,] binfos = stg.getBlockInfo();
-		Stage.BlockInfo binfo;
 
 		int[] expected_blocks = new int[]{
 			1,0,1,1,1,1,
