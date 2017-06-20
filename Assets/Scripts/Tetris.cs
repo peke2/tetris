@@ -32,29 +32,36 @@ public class Tetris
 	public static Tetris CreateGamePlay()
 	{
 		Tetris tetris;
-		tetris = new Tetris(10, 20);
+		Tetrimino tetrimino = new Tetrimino();
+
+		int min_index = 0;
+		int max_index = tetrimino.getTypeMax();
+
+		Generator generator = new Generator(min_index, max_index);
+		InputPad input = new InputPad();
+
+		//落下ブロックは内部で固定でも良いのでは？
+		//生成クラスでの範囲指定に、落下ブロックの情報が必要だから中で生成すると厳しい
+		//ひとまずは外に出しておく
+		//ファクトリで作成するので外部からは呼ぶだけだし
+		tetris = new Tetris(10, 20, tetrimino, generator, input);
 		return tetris;
 	}
 
 
-	public Tetris(int stage_w, int stage_h)
+	public Tetris(int stage_w, int stage_h, Tetrimino tetrimino, Generator generator, InputBase input)
 	{
-		m_stage_w = 10;
-		m_stage_h = 20;
+		m_stage_w = stage_w;
+		m_stage_h = stage_h;
 		m_stage = new Stage(m_stage_w, m_stage_h);
 
-		m_tetrimino = new Tetrimino();
+		m_tetrimino = tetrimino;
 		initTetriminoStartPosition();
 
-		int min_index = 0;
-		int max_index = m_tetrimino.getTypeMax();
-
-		//[todo]	外部から割り当てられるようにする	ファクトリで
-		m_generator = new Generator(min_index, max_index);
+		m_generator = generator;
 		m_drop_serial = 0;
 
-		//[todo]	外部から割り当てられるようにする	ファクトリで
-		m_input = new InputPad();
+		m_input = input;
 		m_drop_interval = DROP_INTERVAL;
 		m_fix_interval = 0;
 
