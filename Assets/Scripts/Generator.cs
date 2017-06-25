@@ -25,7 +25,8 @@ public class Generator
 	{
 		m_table = new int[size];
 
-		//他の箇所でランダムを使う場合を考えると、ここでシードをセットするのはどうなのか？
+		//	他の箇所でランダムを使う場合を考えて、シードを変更したら戻す
+		Random.State currentState = Random.state;
 		Random.InitState(SEED_VALUE);
 
 		for(int i = 0; i<size; i++)
@@ -33,6 +34,9 @@ public class Generator
 			//m_table[i] = Random.Range(m_min_index, m_max_index+1);
 			m_table[i] = i % ((m_max_index+1) - m_min_index) + m_min_index;	//	順番
 		}
+
+		//	変更したシードを戻す
+		Random.state = currentState;
 	}
 
 	/**

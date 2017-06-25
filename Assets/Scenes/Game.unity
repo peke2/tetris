@@ -293,6 +293,8 @@ MonoBehaviour:
   tetrisBlock: {fileID: 1717425130599002, guid: fc735b089459bae4eb146235a918b740,
     type: 2}
   boardBlank: {fileID: 1717425130599002, guid: 990419a4bc7ca834f8643ce5bea9f340, type: 2}
+  gameoverMark: {fileID: 1833624329594942, guid: f177af70be6a09944aeeb550ad73a2c9,
+    type: 2}
   gameOverText: {fileID: 1233917430136468, guid: 7b1bc1737a3d4f043825b89b78517a0d,
     type: 2}
 --- !u!114 &1054244849

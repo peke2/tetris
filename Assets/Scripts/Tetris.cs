@@ -13,10 +13,14 @@ public class Tetris
 	InputBase   m_input;
 	Generator   m_generator;
 
-	const int DROP_INTERVAL = 15;   //	落下間隔(フレーム数)
-	const int FIX_INTERVAL = 30;   //	固定までの間隔(フレーム数)
+	public const int BOARD_SIZE_W = 10;	//	盤面の基本サイズ
+	public const int BOARD_SIZE_H = 20;
+
+	const int DROP_INTERVAL = 15;		//	落下間隔(フレーム数)
+	const int DROP_INTERVAL_REDUCE = 2;	//	落下間隔の削減値
+	const int FIX_INTERVAL = 30;		//	固定までの間隔(フレーム数)
 	int m_drop_interval;
-	int m_fix_interval;
+	//int m_fix_interval;	//固定までの時間だけど、今は使わないので外しておく
 
 	int m_stage_w;
 	int m_stage_h;
@@ -38,16 +42,37 @@ public class Tetris
 		int max_index = tetrimino.getTypeMax();
 
 		Generator generator = new Generator(min_index, max_index);
-		InputPad input = new InputPad();
+		InputBase input = new InputPad();
 
 		//落下ブロックは内部で固定でも良いのでは？
 		//生成クラスでの範囲指定に、落下ブロックの情報が必要だから中で生成すると厳しい
 		//ひとまずは外に出しておく
 		//ファクトリで作成するので外部からは呼ぶだけだし
-		tetris = new Tetris(10, 20, tetrimino, generator, input);
+		tetris = new Tetris(BOARD_SIZE_W, BOARD_SIZE_H, tetrimino, generator, input);
 		return tetris;
 	}
 
+	/**
+	 *	自動プレイ用インスタンスを作成
+	 */
+	public static Tetris CreateGameAutoPlay(int[] bitArray=null)
+	{
+		Tetris tetris;
+		Tetrimino tetrimino = new Tetrimino();
+
+		int min_index = 0;
+		int max_index = tetrimino.getTypeMax();
+
+		Generator generator = new Generator(min_index, max_index);
+		InputBase input = new InputAuto(bitArray);
+
+		//落下ブロックは内部で固定でも良いのでは？
+		//生成クラスでの範囲指定に、落下ブロックの情報が必要だから中で生成すると厳しい
+		//ひとまずは外に出しておく
+		//ファクトリで作成するので外部からは呼ぶだけだし
+		tetris = new Tetris(BOARD_SIZE_W, BOARD_SIZE_H, tetrimino, generator, input);
+		return tetris;
+	}
 
 	public Tetris(int stage_w, int stage_h, Tetrimino tetrimino, Generator generator, InputBase input)
 	{
@@ -63,7 +88,7 @@ public class Tetris
 
 		m_input = input;
 		m_drop_interval = DROP_INTERVAL;
-		m_fix_interval = 0;
+		//m_fix_interval = 0;
 
 		m_is_game_over = false;
 
@@ -221,7 +246,7 @@ public class Tetris
 		//	下を押している間は追加で落下間隔を減らす
 		if((input_bit & InputBase.MASK_DOWN) != 0)
 		{
-			m_drop_interval--;
+			m_drop_interval -= DROP_INTERVAL_REDUCE;
 		}
 
 		m_drop_interval--;
@@ -276,9 +301,19 @@ public class Tetris
 		return m_tetrimino;
 	}
 
+	/**
+	 *	ゲームオーバーか？
+	 */
 	public bool isGameOver()
 	{
 		return m_is_game_over;
 	}
 
+	/**
+	 *	ドロップがどこまで進んだか？
+	 */
+	public int getDropSerial()
+	{
+		return m_drop_serial;
+	}
 }

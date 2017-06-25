@@ -39,14 +39,4 @@ public class InputPad : InputBase {
 		if(true == btn_c) m_input_bit |= MASK_BUTTON_C;
 
 	}
-
-	public override int getButtonBit()
-	{
-		return m_input_bit;
-	}
-
-	public override int getButtonEdgeBit()
-	{
-		return (m_input_bit ^ m_input_bit_prev) & m_input_bit;
-	}
 }

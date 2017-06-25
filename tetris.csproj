@@ -81,7 +81,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Scripts\GenerationManager.cs" />
     <Compile Include="Assets\Scripts\Generator.cs" />
+    <Compile Include="Assets\Scripts\InputAuto.cs" />
     <Compile Include="Assets\Scripts\InputBase.cs" />
     <Compile Include="Assets\Scripts\InputPad.cs" />
     <Compile Include="Assets\Scripts\Render.cs" />

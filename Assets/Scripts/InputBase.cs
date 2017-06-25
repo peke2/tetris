@@ -38,12 +38,12 @@ public class InputBase {
 
 	public virtual int getButtonBit()
 	{
-		return 0;
+		return m_input_bit;
 	}
 
 	public virtual int getButtonEdgeBit()
 	{
-		return 0;
+		return (m_input_bit ^ m_input_bit_prev) & m_input_bit;
 	}
 
 }
