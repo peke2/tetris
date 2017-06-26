@@ -55,7 +55,7 @@ public class Tetris
 	/**
 	 *	自動プレイ用インスタンスを作成
 	 */
-	public static Tetris CreateGameAutoPlay(int[] bitArray=null)
+	public static Tetris CreateGameAutoPlay(List<int> bitList=null)
 	{
 		Tetris tetris;
 		Tetrimino tetrimino = new Tetrimino();
@@ -64,7 +64,7 @@ public class Tetris
 		int max_index = tetrimino.getTypeMax();
 
 		Generator generator = new Generator(min_index, max_index);
-		InputBase input = new InputAuto(bitArray);
+		InputBase input = new InputAuto(bitList);
 
 		//落下ブロックは内部で固定でも良いのでは？
 		//生成クラスでの範囲指定に、落下ブロックの情報が必要だから中で生成すると厳しい

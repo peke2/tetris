@@ -16,8 +16,8 @@ public class GenerationManager
 	int m_generation;   //	今の世代
 	int m_play_count;   //	世代のプレイカウント
 
-	List<int[]> m_currentGenerationList;
-	List<int[]> m_nextGenerationList;
+	List<List<int>> m_currentGenerationList;
+	List<List<int>> m_nextGenerationList;
 
 	List<Tetris> m_tetrisList;
 
@@ -120,13 +120,13 @@ public class GenerationManager
 	/**
 	 *	世代管理リストを初期化
 	 */
-	List<int[]> initGenerationList()
+	List<List<int>> initGenerationList()
 	{
-		List<int[]> list = new List<int[]>();
+		List<List<int>> list = new List<List<int>>();
 		for(int i = 0; i<GENERATION_NUMS; i++)
 		{
 			//	操作用データ(世代交代していないので空のデータ)
-			list.Add(new int[0]);
+			list.Add(new List<int>());
 		}
 		return list;
 	}
@@ -143,14 +143,14 @@ public class GenerationManager
 
 		List<Tetris> tetrisList = new List<Tetris>();
 
-		int[] bitList;
+		List<int> bitList;
 		Tetris tetris;
 
 		//	自動
 		for(int i=0; i<MAX_PLAY_NUMS; i++)
 		{
 			bitList = m_currentGenerationList[i + index_offset];
-			if(0 == bitList.Length) bitList = null;
+			if(0 == bitList.Count) bitList = null;
 			tetris = Tetris.CreateGameAutoPlay(bitList);
 			tetrisList.Add(tetris);
 		}

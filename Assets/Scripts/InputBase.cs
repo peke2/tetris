@@ -46,4 +46,12 @@ public class InputBase {
 		return (m_input_bit ^ m_input_bit_prev) & m_input_bit;
 	}
 
+
+	/**
+	 *	入力ビットリストを取得
+	 */
+	public virtual List<int> getInputBitList()
+	{
+		return new List<int>();
+	}
 }

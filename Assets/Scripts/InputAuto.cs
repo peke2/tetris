@@ -2,78 +2,101 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class InputAuto : InputBase
+public class InputAuto:InputBase
 {
-	int[]   m_auto_bit_array;
-	int     m_array_index;
+	List<int> m_autoBitList;
+	int m_list_index;
 
-	public InputAuto(int[] bitarray=null)
+	//	入力の組み合わせ
+	int[] m_patterns = new int[]
 	{
-		if(null == bitarray)
+		0,
+		MASK_LEFT,
+		MASK_LEFT | MASK_DOWN,
+		MASK_LEFT | MASK_BUTTON_A,
+		MASK_LEFT | MASK_DOWN | MASK_BUTTON_A,
+		MASK_LEFT | MASK_BUTTON_B,
+		MASK_LEFT | MASK_DOWN | MASK_BUTTON_B,
+
+		MASK_RIGHT,
+		MASK_RIGHT | MASK_DOWN,
+		MASK_RIGHT | MASK_BUTTON_A,
+		MASK_RIGHT | MASK_DOWN | MASK_BUTTON_A,
+		MASK_RIGHT | MASK_BUTTON_B,
+		MASK_RIGHT | MASK_DOWN | MASK_BUTTON_B,
+
+		MASK_DOWN,
+		MASK_DOWN | MASK_BUTTON_A,
+		MASK_DOWN | MASK_BUTTON_B,
+
+		MASK_BUTTON_A,
+		MASK_BUTTON_B,
+	};
+
+
+	public InputAuto(List<int> bitList = null)
+	{
+		initInputBitList();
+
+		if(null != bitList)
 		{
-			initBitStream();
-		}
-		else
-		{
-			m_auto_bit_array = bitarray;
+			//	指定されたリストを適用
+			m_autoBitList = bitList;
 		}
 	}
-
-	void initBitStream()
-	{
-		int total_frames = 60*60*5; //[todo] 入力データのサイズは要見直し → 現状5分
-		m_auto_bit_array = new int[total_frames];
-
-		//	入力の組み合わせ
-		int[] patterns = new int[]
-		{
-			0,
-			MASK_LEFT,
-			MASK_LEFT | MASK_DOWN,
-			MASK_LEFT | MASK_BUTTON_A,
-			MASK_LEFT | MASK_DOWN | MASK_BUTTON_A,
-			MASK_LEFT | MASK_BUTTON_B,
-			MASK_LEFT | MASK_DOWN | MASK_BUTTON_B,
-
-			MASK_RIGHT,
-			MASK_RIGHT | MASK_DOWN,
-			MASK_RIGHT | MASK_BUTTON_A,
-			MASK_RIGHT | MASK_DOWN | MASK_BUTTON_A,
-			MASK_RIGHT | MASK_BUTTON_B,
-			MASK_RIGHT | MASK_DOWN | MASK_BUTTON_B,
-
-			MASK_DOWN,
-			MASK_DOWN | MASK_BUTTON_A,
-			MASK_DOWN | MASK_BUTTON_B,
-
-			MASK_BUTTON_A,
-			MASK_BUTTON_B,
-		};
-
-		//[todo] パターンは外部から与えるか内部で管理するか決める
-		//入力に依存したものなので、インスタンス作成後に取り出して外部から使えば良い？
-		//ランダムはシードとか気にしないでおく
-		for(int i=0; i<total_frames; i++)
-		{
-			int index = Random.Range(0, patterns.Length);
-			m_auto_bit_array[i] = patterns[index];
-		}
-	}
-
 
 	public override void update()
 	{
 		//	前のフレームの状態を残す
 		m_input_bit_prev = m_input_bit;
+		//	現在の入力を取得
+		m_input_bit = getInputBit();
+	}
 
-		if(m_array_index >= m_auto_bit_array.Length)
+	/**
+	 *	入力ビットを取得
+	 */
+	int getInputBit()
+	{
+		int index;
+		int bit;
+
+		if(m_list_index < m_autoBitList.Count)
 		{
-			m_input_bit = 0;
+			//	参照可能ならば既存のリストから参照する
+			bit = m_autoBitList[m_list_index];
+			m_list_index++;
 		}
 		else
 		{
-			m_input_bit = m_auto_bit_array[m_array_index];
-			m_array_index++;
+			//	参照先が無ければ
+			index = Random.Range(0, m_patterns.Length);
+			bit = m_patterns[index];
+
+			//	取得した情報は後で参照できるよう保持
+			m_autoBitList.Add(bit);
+
+			//	次の参照はリストの末尾(まだ参照先は無い)
+			m_list_index = m_autoBitList.Count;
 		}
+
+		return bit;
+	}
+
+	/**
+	 *	入力ビットリストを初期化
+	 */
+	public void initInputBitList()
+	{
+		m_list_index = 0;
+		m_autoBitList = new List<int>();
+	}
+
+	/**
+	 *	入力ビットリストを取得
+	 */
+	public override List<int> getInputBitList()
+	{
+		return m_autoBitList;
 	}
 }
