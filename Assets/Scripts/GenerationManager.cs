@@ -9,9 +9,9 @@ public class GenerationManager
 {
 
 	const int GENERATION_NUMS = 20;     //	1世代の数
-	const int MAX_PLAY_NUMS = 10;       //	最大プレイ数
+	const int MAX_PLAY_NUMS = 20;       //	最大プレイ数
 
-	const int PROC_COUNT_PER_FRAME = 3;	//	1フレームの処理回数
+	const int PROC_COUNT_PER_FRAME = 4;	//	1フレームの処理回数
 
 	int m_generation;   //	今の世代
 	int m_play_count;   //	世代のプレイカウント
@@ -101,11 +101,11 @@ public class GenerationManager
 	 */
 	State procStateChange()
 	{
-		if( 0 == m_play_count )
-		{
-			m_play_count++;
-		}
-		else
+		m_play_count++;
+		int nums = m_play_count * MAX_PLAY_NUMS;
+
+		//	1世代分の実行数に達したら次の世代へ
+		if( GENERATION_NUMS <= nums )
 		{
 			m_play_count = 0;
 			m_generation++;
