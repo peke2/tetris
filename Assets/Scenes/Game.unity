@@ -290,7 +290,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8073856c994957a448a57c9a56f8a19b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tetrisBlock: {fileID: 1717425130599002, guid: fc735b089459bae4eb146235a918b740,
+  tetrisBlock: {fileID: 1549763720855190, guid: f877264fcdeec16499a8c8657a944ab0,
     type: 2}
   boardBlank: {fileID: 1717425130599002, guid: 990419a4bc7ca834f8643ce5bea9f340, type: 2}
   gameoverMark: {fileID: 1833624329594942, guid: f177af70be6a09944aeeb550ad73a2c9,
@@ -321,6 +321,48 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &1281034744
+Prefab:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 4450883595248854, guid: f877264fcdeec16499a8c8657a944ab0, type: 2}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4450883595248854, guid: f877264fcdeec16499a8c8657a944ab0, type: 2}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4450883595248854, guid: f877264fcdeec16499a8c8657a944ab0, type: 2}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4450883595248854, guid: f877264fcdeec16499a8c8657a944ab0, type: 2}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4450883595248854, guid: f877264fcdeec16499a8c8657a944ab0, type: 2}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4450883595248854, guid: f877264fcdeec16499a8c8657a944ab0, type: 2}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4450883595248854, guid: f877264fcdeec16499a8c8657a944ab0, type: 2}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4450883595248854, guid: f877264fcdeec16499a8c8657a944ab0, type: 2}
+      propertyPath: m_RootOrder
+      value: 4
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 100100000, guid: f877264fcdeec16499a8c8657a944ab0, type: 2}
+  m_IsPrefabParent: 0
 --- !u!1 &2005141160
 GameObject:
   m_ObjectHideFlags: 0

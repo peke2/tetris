@@ -2,6 +2,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/**
+ *	このクラスは勝手にStageManagerを参照して情報を取得・描画する
+ *	他のクラスからはこのクラスを触らない
+ */
 public class Render : MonoBehaviour {
 
 	public GameObject tetrisBlock;
@@ -18,7 +22,7 @@ public class Render : MonoBehaviour {
 
 		Vector2 m_offset;
 
-		public Resource(Tetris tetris, GameObject tetrisBlock, GameObject gameoverMark)
+		public Resource(Tetris tetris, GameObject tetrisBlock, GameObject gameoverMark, Vector2[] blockUvList, Vector2[] blankUvList)
 		{
 			Stage stage = tetris.getStage();
 
@@ -34,7 +38,17 @@ public class Render : MonoBehaviour {
 			for(int i = 0; i<4; i++)
 			{
 				m_minoBlocks[i] = Instantiate(tetrisBlock);
-				m_minoBlocks[i].GetComponent<SpriteRenderer>().sortingOrder = LAYER_DROP;
+				//m_minoBlocks[i].GetComponent<SpriteRenderer>().sortingOrder = LAYER_DROP;
+				MeshQuad mesh = m_minoBlocks[i].GetComponent<MeshQuad>();
+				mesh.updateUv(blockUvList);
+			}
+
+			for(int i=0; i<w*h; i++)
+			{
+				m_blocks[i] = Instantiate(tetrisBlock);
+				//m_minoBlocks[i].GetComponent<SpriteRenderer>().sortingOrder = LAYER_DROP;
+				MeshQuad mesh = m_blocks[i].GetComponent<MeshQuad>();
+				mesh.updateUv(blankUvList);
 			}
 
 			//	ゲームオーバー表示
@@ -150,6 +164,23 @@ public class Render : MonoBehaviour {
 		new Color(1,1,0.2f,1),
 	};
 
+	//	ブロックの参照先UV
+	//	テクスチャに対する直値なので後々どうかと思うけど、今回はとりあえずやるだけやる
+	Vector2[] m_blockUvList = new Vector2[]
+	{
+		new Vector2(0.25f, 1.0f),
+		new Vector2(0.50f, 1.0f),
+		new Vector2(0.25f, 0.75f),
+		new Vector2(0.50f, 0.75f),
+	};
+	Vector2[] m_blankUvList = new Vector2[]
+	{
+		new Vector2(0.50f, 1.0f),
+		new Vector2(0.75f, 1.0f),
+		new Vector2(0.50f, 0.75f),
+		new Vector2(0.75f, 0.75f),
+	};
+
 
 	// Use this for initialization
 	void Start ()
@@ -206,7 +237,7 @@ public class Render : MonoBehaviour {
 
 		foreach(Tetris tetris in stgMngr.tetrisList)
 		{
-			Resource res = new Resource(tetris, tetrisBlock, gameoverMark);
+			Resource res = new Resource(tetris, tetrisBlock, gameoverMark, m_blockUvList, m_blankUvList);
 			res.gameoverMark.SetActive(false);
 
 			//	描画のオフセットを設定
@@ -251,24 +282,46 @@ public class Render : MonoBehaviour {
 			for(int x=0; x<w; x++)
 			{
 				int index = x + y*w;
+				/*
 				if(null != blocks[index])
 				{
 					GameObject.Destroy(blocks[index]);
 					blocks[index] = null;
-				}
+				}*/
 
-				GameObject block = null;
+				GameObject block = blocks[index];
 				if(Stage.BLOCK_STATE.EXISTS == board[x, y].state)
 				{
-					block = Instantiate(tetrisBlock);
+					//block = Instantiate(tetrisBlock);
 					//block.GetComponent<Renderer>().material.color = m_colorList[board[x,y].color_index];
 
-					blocks[index] = block;
+					MeshQuad mesh = block.GetComponent<MeshQuad>();
+					Color[] colors = new Color[]
+					{
+						m_colorList[board[x,y].color_index],
+						m_colorList[board[x,y].color_index],
+						m_colorList[board[x,y].color_index],
+						m_colorList[board[x,y].color_index],
+					};
+					mesh.updateUv(m_blockUvList);
+					mesh.updateColor(colors);
+
+					//blocks[index] = block;
 				}
 				else if( (Stage.BLOCK_STATE.NONE == board[x, y].state) && (y<h-h_margin) )	//	マージンにはブランクを描画しない
 				{
-					block = Instantiate(boardBlank);
-					blocks[index] = block;
+					//	block = Instantiate(boardBlank);
+					//	blocks[index] = block;
+					MeshQuad mesh = block.GetComponent<MeshQuad>();
+					Color[] colors = new Color[]
+					{
+						new Color(1,1,1,1),
+						new Color(1,1,1,1),
+						new Color(1,1,1,1),
+						new Color(1,1,1,1),
+					};
+					mesh.updateUv(m_blankUvList);
+					mesh.updateColor(colors);
 				}
 				if(null != block)
 				{
@@ -308,10 +361,22 @@ public class Render : MonoBehaviour {
 				{
 					float posx = x + base_x + offset.x;
 					float posy = y + base_y + offset.y;
-					GameObject blk = blocks[num_blocks];
-					blk.transform.position = new Vector3(posx, posy, 0);
-					blk.GetComponent<Renderer>().material.color = m_colorList[tetrimino.getColorIndex()];
-					
+					GameObject block = blocks[num_blocks];
+					block.transform.position = new Vector3(posx, posy, 0);
+					//blk.GetComponent<Renderer>().material.color = m_colorList[tetrimino.getColorIndex()];
+
+					int color_index = tetrimino.getColorIndex();
+					MeshQuad mesh = block.GetComponent<MeshQuad>();
+					Color[] colors = new Color[]
+					{
+						m_colorList[color_index],
+						m_colorList[color_index],
+						m_colorList[color_index],
+						m_colorList[color_index],
+					};
+					mesh.updateUv(m_blockUvList);
+					mesh.updateColor(colors);
+
 					num_blocks++;
 				}
 
