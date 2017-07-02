@@ -8,7 +8,7 @@ public class InputAuto:InputBase
 	int m_list_index;
 
 	//	入力の組み合わせ
-	int[] m_patterns = new int[]
+	static int[] m_patterns = new int[]
 	{
 		0,
 		MASK_LEFT,
@@ -98,5 +98,22 @@ public class InputAuto:InputBase
 	public override List<int> getInputBitList()
 	{
 		return m_autoBitList;
+	}
+
+	/**
+	 *	参照先の位置を取得
+	 */
+	public int getListIndex()
+	{
+		return m_list_index;
+	}
+
+
+	/**
+	 *	入力のパターンを取得する
+	 */
+	static public int[] getInputPatterns()
+	{
+		return m_patterns;
 	}
 }

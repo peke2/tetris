@@ -126,6 +126,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Editor\test\TestGenerationManager.cs" />
     <Compile Include="Assets\Editor\test\TestInputAuto.cs" />
     <Compile Include="Assets\Editor\test\TestStage.cs" />
     <Compile Include="Assets\Editor\test\TestTetrimino.cs" />

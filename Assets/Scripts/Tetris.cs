@@ -316,4 +316,12 @@ public class Tetris
 	{
 		return m_drop_serial;
 	}
+
+	/**
+	 *	入力を取得
+	 */
+	public InputBase getInput()
+	{
+		return m_input;
+	}
 }

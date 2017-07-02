@@ -87,6 +87,7 @@
     <Compile Include="Assets\Scripts\InputAuto.cs" />
     <Compile Include="Assets\Scripts\InputBase.cs" />
     <Compile Include="Assets\Scripts\InputPad.cs" />
+    <Compile Include="Assets\Scripts\Json\JsonSample.cs" />
     <Compile Include="Assets\Scripts\Render.cs" />
     <Compile Include="Assets\Scripts\Stage.cs" />
     <Compile Include="Assets\Scripts\StageManager.cs" />

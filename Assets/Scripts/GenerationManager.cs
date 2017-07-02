@@ -11,13 +11,15 @@ public class GenerationManager
 	const int GENERATION_NUMS = 20;     //	1世代の数
 	const int MAX_PLAY_NUMS = 20;       //	最大プレイ数
 
-	const int PROC_COUNT_PER_FRAME = 4;	//	1フレームの処理回数
+	const int PROC_COUNT_PER_FRAME = 4; //	1フレームの処理回数
+
+	const int INHERIT_BOUND = 300;      //	交叉する間隔
 
 	int m_generation;   //	今の世代
 	int m_play_count;   //	世代のプレイカウント
 
-	List<List<int>> m_currentGenerationList;
-	List<List<int>> m_nextGenerationList;
+	List<List<int>> m_currentGenInputBitList;   //	現在の世代の入力情報格納リスト
+	List<List<int>> m_nextGenInputBitList;      //	次世代の入力情報格納リスト
 
 	List<Tetris> m_tetrisList;
 
@@ -37,9 +39,9 @@ public class GenerationManager
 
 	public GenerationManager()
 	{
-		//	世代の走査情報
-		m_currentGenerationList = initGenerationList();
-		m_nextGenerationList = initGenerationList();
+		//	世代の操作情報保持リストを初期化
+		m_currentGenInputBitList = initGenerationList(false);
+		m_nextGenInputBitList = initGenerationList(true);   //	参照されるため、空の情報を追加する
 
 		//	初期化から開始
 		m_stateProc = procStateInit;
@@ -80,7 +82,7 @@ public class GenerationManager
 	 */
 	State procStateUpdate()
 	{
-		for(int i=0; i<PROC_COUNT_PER_FRAME; i++)
+		for(int i = 0; i<PROC_COUNT_PER_FRAME; i++)
 		{
 			foreach(Tetris tetris in m_tetrisList)
 			{
@@ -88,7 +90,7 @@ public class GenerationManager
 			}
 		}
 
-		if( true == isAllGameOver() )
+		if(true == isAllGameOver())
 		{
 			m_stateProc = procStateChange;
 		}
@@ -104,9 +106,15 @@ public class GenerationManager
 		m_play_count++;
 		int nums = m_play_count * MAX_PLAY_NUMS;
 
+		//	操作情報を保持
+		pushInputBitList();
+
 		//	1世代分の実行数に達したら次の世代へ
-		if( GENERATION_NUMS <= nums )
+		if(GENERATION_NUMS <= nums)
 		{
+			//	操作の遺伝
+			inheritGeneration();
+
 			m_play_count = 0;
 			m_generation++;
 		}
@@ -120,13 +128,17 @@ public class GenerationManager
 	/**
 	 *	世代管理リストを初期化
 	 */
-	List<List<int>> initGenerationList()
+	List<List<int>> initGenerationList(bool isAddEmpty = true)
 	{
 		List<List<int>> list = new List<List<int>>();
-		for(int i = 0; i<GENERATION_NUMS; i++)
+
+		if(true == isAddEmpty)
 		{
-			//	操作用データ(世代交代していないので空のデータ)
-			list.Add(new List<int>());
+			for(int i = 0; i<GENERATION_NUMS; i++)
+			{
+				//	操作用データ(世代交代していないので空のデータ)
+				list.Add(new List<int>());
+			}
 		}
 		return list;
 	}
@@ -147,9 +159,9 @@ public class GenerationManager
 		Tetris tetris;
 
 		//	自動
-		for(int i=0; i<MAX_PLAY_NUMS; i++)
+		for(int i = 0; i<MAX_PLAY_NUMS; i++)
 		{
-			bitList = m_currentGenerationList[i + index_offset];
+			bitList = m_nextGenInputBitList[i + index_offset];
 			if(0 == bitList.Count) bitList = null;
 			tetris = Tetris.CreateGameAutoPlay(bitList);
 			tetrisList.Add(tetris);
@@ -158,6 +170,295 @@ public class GenerationManager
 		return tetrisList;
 	}
 
+
+	/**
+	 *	現在の操作情報を残す
+	 */
+	void pushInputBitList()
+	{
+		foreach(Tetris tetris in m_tetrisList)
+		{
+			InputAuto inp;
+			inp = (InputAuto)tetris.getInput();
+
+			List<int> list = new List<int>(inp.getInputBitList());
+
+			//[todo] クラスの参照先が無い場合の対応を入れる
+			//ここに来るのは自動入力だけの予定なので放置でも構わない
+			//ユーザーの入力には参照位置の管理は含まれないのでキャストしたらメソッドは無いはず
+			int index = inp.getListIndex();
+
+			//	元の入力情報よりも参照位置が前ならば、後ろの情報をカット
+			if( list.Count > index )
+			{
+				list.RemoveRange(index, list.Count-index);
+			}
+
+			m_currentGenInputBitList.Add(list);
+		}
+	}
+
+
+	/**
+	 *	世代を引き継ぐ
+	 */
+	void inheritGeneration()
+	{
+		List<List<int>> list = new List<List<int>>();
+
+		//	現在の入力情報を取得
+		for(int i=0; i<GENERATION_NUMS; i++)
+		{
+			list.Add(m_currentGenInputBitList[i]);
+		}
+
+		//	進行の大きい順にリストをソート
+		list.Sort((List<int> a, List<int> b) => b.Count - a.Count);
+
+		Debug.Log("---- 世代["+m_generation+"] ----");
+		Debug.Log("最大手数="+list[0].Count);
+
+		//	操作リストをクリア
+		m_currentGenInputBitList.Clear();
+		m_nextGenInputBitList.Clear();
+
+		int bound = INHERIT_BOUND;
+		List<List<int>> calcResultList;
+
+		//	1位と2位、2位と3位、3位と4位、4位と5位で交叉
+		//	1位の動きが残りすぎるので他の順位も残るようにする
+		//	この先の選択で重複するけど、1位以外の発生が増えるので良いかも？
+		for(int i=0; i<4; i++)
+		{
+			calcResultList = calcCrossover(list[i], list[i+1], bound);
+			m_nextGenInputBitList.Add(calcResultList[0]);
+		}
+
+		//	1位の突然変異
+		//	5%の部分を変異
+		m_nextGenInputBitList.Add( mutation(list[0], 5) );
+
+		//	ランダムで選択した2つを交叉 → 4つ
+		//	1位は除く
+		List<int> comb = new List<int>();
+		List<List<int>> combList;
+		for(int i=1; i<GENERATION_NUMS; i++)
+		{
+			comb.Add(i);
+		}
+		combList = GenerationManager.createCombination(comb, 2);	//	2つの組み合わせを列挙
+
+		for(int i=0; i<4; i++)
+		{
+			int index;
+			index = Random.Range(0, combList.Count);
+			List<int> targetIndices = combList[index];
+			combList.RemoveAt(index);
+
+			calcResultList = calcCrossover(list[targetIndices[0]], list[targetIndices[1]], bound);
+			m_nextGenInputBitList.Add(calcResultList[0]);	//	残すのは交叉後の1つだけ
+			//m_nextGenInputBitList.Add(calcResultList[1]);
+		}
+
+		//	ランダムで選択したものを突然変異 → 1つ
+		//	1位以外
+		//	5%の部分を変異
+		m_nextGenInputBitList.Add(mutation(list[Random.Range(1, list.Count)], 5));
+
+		//	ランダムで5つ選択してそのまま次へ持ち越し
+		List<int> topRemovedList = new List<int>();
+		List<int> randomSelected;
+
+		//	1位は他と交叉しているので、そのまま次に残さない
+		for(int i=1; i<list.Count; i++)
+		{
+			topRemovedList.Add(i);
+		}
+		randomSelected = selectRandom(topRemovedList, 5);
+
+		foreach(int i in randomSelected)
+		{
+			m_nextGenInputBitList.Add(new List<int>(list[i]));
+		}
+
+		//	残り5つは最初から
+		for(int i=0; i<5; i++)
+		{
+			m_nextGenInputBitList.Add(new List<int>());
+		}
+
+		Debug.Assert(m_nextGenInputBitList.Count == GENERATION_NUMS);
+	}
+
+	/**
+	 *	指定のリストどうしを交叉
+	 */
+	static public List<List<int>> calcCrossover(List<int> listA, List<int> listB, int bound=600)
+	{
+		List<List<int>> list = new List<List<int>>();
+
+		//	出力先を作る
+		list.Add(new List<int>());
+		list.Add(new List<int>());
+
+		//	基準は短い方
+		int step, tail;
+		if(listA.Count < listB.Count)
+		{
+			step = listA.Count;
+			tail = listB.Count;
+		}
+		else
+		{
+			step = listB.Count;
+			tail = listA.Count;
+		}
+
+		//	お互いの内容を入れ替えながらリストに追加
+		int a, b;
+		int index;
+
+		for(int i=0; i<step; i++)
+		{
+			index = (i/bound) & 1;
+
+			if(listA.Count > i)
+			{
+				a = listA[i];
+				list[index].Add(a);
+			}
+
+			if(listB.Count > i)
+			{
+				b = listB[i];
+				list[index^1].Add(b);
+			}
+		}
+
+		//	残りは交叉せずに、そのまま残す
+		for(int i=step; i<tail; i++)
+		{
+			if(listA.Count > i)
+			{
+				list[0].Add(listA[i]);
+			}
+
+			if(listB.Count > i)
+			{
+				list[1].Add(listB[i]);
+			}
+		}
+
+		return list;
+	}
+
+	/**
+	 *	指定のリストを突然変異
+	 */
+	static public List<int> mutation(List<int> listA, int rate)
+	{
+		List<int> list = new List<int>();
+
+		//	突然変異する箇所を選出
+		int mutation_count;
+		mutation_count = (int)(listA.Count * (float)rate / 100.0f);
+
+		List<int> indexList = new List<int>();
+		int ref_index = 0;
+
+		for(int i=0; i<mutation_count; i++)
+		{
+			//	重複があるかもしれないが、あまり厳密に考えない
+			indexList.Add(Random.Range(0, listA.Count));
+		}
+		indexList.Sort();
+
+		int[] inputPatterns = InputAuto.getInputPatterns();
+		int bit;
+		for(int i=0; i<listA.Count; i++)
+		{
+			if((indexList.Count>ref_index) && (i==indexList[ref_index]))
+			{
+				bit = inputPatterns[Random.Range(0,inputPatterns.Length)];
+				ref_index++;
+			}
+			else
+			{
+				bit = listA[i];
+			}
+			list.Add(bit);
+		}
+
+		return list;
+	}
+
+	/**
+	 *	組み合わせ
+	 */
+	static public List<List<int>> createCombination(List<int> list, int r)
+	{
+		List<int> comb = new List<int>();
+		List<List<int>> combList = new List<List<int>>();
+
+		createCombinationRecursive(list, r, comb, combList, 1);
+
+		return combList;
+	}
+
+
+	/**
+	 *	組み合わせの再帰処理
+	 */
+	static public void createCombinationRecursive(List<int> list, int r, List<int> comb, List<List<int>> combList, int depth = 1)
+	{
+		//	指定されたリストから先頭を取り除いて要素を順番に取り出す	
+		List<int> otherList = new List<int>(list);
+
+		while(otherList.Count>0)
+		{
+			//	要素を取り出す
+			int elem = otherList[0];
+			otherList.RemoveAt(0);
+
+			//	組み合わせに追加
+			comb.Add(elem);
+			if(depth < r)
+			{
+				//	組み合わせ数に満たない場合は次の要素へ
+				createCombinationRecursive(otherList, r, comb, combList, depth+1);
+			}
+			else
+			{
+				//	完成した組み合わせを結果に追加
+				combList.Add(new List<int>(comb));
+			}
+			//	組み合わせから末尾を除く
+			comb.RemoveAt(comb.Count-1);
+		}
+	}
+
+
+	/**
+	 *	指定されたリストからランダムで要素を選択(重複無し)
+	 */
+	static public List<int> selectRandom(List<int> list, int num)
+	{
+		List<int> workList = new List<int>(list);
+		List<int> selected = new List<int>();
+
+		for(int i = 0; i<num; i++)
+		{
+			//	参照元が無ければ終了
+			if(0 == workList.Count) break;
+
+			//	選択したら重複しないよう参照元から除去
+			int index;
+			index = Random.Range(0, workList.Count);
+			selected.Add(workList[index]);
+			workList.RemoveAt(index);
+		}
+		return selected;
+	}
 
 	/**
 	 *	全てゲームオーバーか？
