@@ -34,6 +34,11 @@ public class InputAuto:InputBase
 	};
 
 
+	delegate int GetInputPattern();
+
+	GetInputPattern m_ControlProc;
+	GetInputPattern m_ButtonProc;
+
 	public InputAuto(List<int> bitList = null)
 	{
 		initInputBitList();
@@ -43,6 +48,26 @@ public class InputAuto:InputBase
 			//	指定されたリストを適用
 			m_autoBitList = bitList;
 		}
+
+		//	入力のタイプを組み合わせる
+		int index;
+		GetInputPattern[] controls = new GetInputPattern[]
+		{
+			getInputPatternLeft,
+			getInputPatternRight,
+			getInputPatternLess,
+		};
+		GetInputPattern[] buttons = new GetInputPattern[]
+		{
+			getInputPatternButtonA,
+			getInputPatternButtonB,
+			getInputPatternButtonLess,
+		};
+		index = Random.Range(0, 3);
+		m_ControlProc = controls[index];
+
+		index = Random.Range(0, 3);
+		m_ButtonProc = buttons[index];
 	}
 
 	public override void update()
@@ -69,9 +94,11 @@ public class InputAuto:InputBase
 		}
 		else
 		{
-			//	参照先が無ければ
-			index = Random.Range(0, m_patterns.Length);
-			bit = m_patterns[index];
+			//	参照先が無ければランダムで入力を作成する
+			//	index = Random.Range(0, m_patterns.Length);
+			//	bit = m_patterns[index];
+			bit = m_ControlProc();
+			bit |= m_ButtonProc();
 
 			//	取得した情報は後で参照できるよう保持
 			m_autoBitList.Add(bit);
@@ -108,12 +135,151 @@ public class InputAuto:InputBase
 		return m_list_index;
 	}
 
-
 	/**
 	 *	入力のパターンを取得する
 	 */
 	static public int[] getInputPatterns()
 	{
 		return m_patterns;
+	}
+
+	/**
+	 *	1～100の間で数を取得
+	 */
+	int getRate()
+	{
+		return Random.Range(1, 100+1);
+	}
+
+	//	左移動多め
+	int getInputPatternLeft()
+	{
+		int rate = getRate();
+		int bit = 0;
+
+		if(rate <= 30)
+		{
+			bit = MASK_LEFT;
+		}
+		else if(rate <= 40)
+		{
+			bit = MASK_RIGHT;
+		}
+		else
+		{
+			bit = 0;
+		}
+
+		return bit;
+	}
+
+	//	右移動多め
+	int getInputPatternRight()
+	{
+		int rate = getRate();
+		int bit = 0;
+
+		if(rate <= 30)
+		{
+			bit = MASK_RIGHT;
+		}
+		else if(rate <= 30)
+		{
+			bit = MASK_LEFT;
+		}
+		else
+		{
+			bit = 0;
+		}
+
+		return bit;
+	}
+
+	//	移動少なめ
+	int getInputPatternLess()
+	{
+		int rate = getRate();
+		int bit = 0;
+
+		if(rate <= 90)
+		{
+			bit = 0;
+		}
+		else if(rate <= 95)
+		{
+			bit = MASK_LEFT;
+		}
+		else
+		{
+			bit = MASK_RIGHT;
+		}
+
+		return bit;
+	}
+
+	//	回転A多め
+	int getInputPatternButtonA()
+	{
+		int rate = getRate();
+		int bit = 0;
+
+		if(rate <= 20)
+		{
+			bit = MASK_BUTTON_A;
+		}
+		else if(rate <= 25)
+		{
+			bit = MASK_BUTTON_B;
+		}
+		else
+		{
+			bit = 0;
+		}
+
+		return bit;
+	}
+
+	//	回転B多め
+	int getInputPatternButtonB()
+	{
+		int rate = getRate();
+		int bit = 0;
+
+		if(rate <= 20)
+		{
+			bit = MASK_BUTTON_B;
+		}
+		else if(rate <= 25)
+		{
+			bit = MASK_BUTTON_A;
+		}
+		else
+		{
+			bit = 0;
+		}
+
+		return bit;
+	}
+
+	//	回転少な目
+	int getInputPatternButtonLess()
+	{
+		int rate = getRate();
+		int bit = 0;
+
+		if(rate <= 90)
+		{
+			bit = 0;
+		}
+		else if(rate <= 95)
+		{
+			bit = MASK_BUTTON_A;
+		}
+		else
+		{
+			bit = MASK_BUTTON_B;
+		}
+
+		return bit;
 	}
 }

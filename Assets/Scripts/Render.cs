@@ -43,6 +43,7 @@ public class Render : MonoBehaviour {
 				mesh.updateUv(blockUvList);
 			}
 
+			//	盤面の描画オブジェクトをあらかじめ用意
 			for(int i=0; i<w*h; i++)
 			{
 				m_blocks[i] = Instantiate(tetrisBlock);
@@ -282,6 +283,7 @@ public class Render : MonoBehaviour {
 			for(int x=0; x<w; x++)
 			{
 				int index = x + y*w;
+				bool isVisible = false;
 				/*
 				if(null != blocks[index])
 				{
@@ -307,23 +309,31 @@ public class Render : MonoBehaviour {
 					mesh.updateColor(colors);
 
 					//blocks[index] = block;
+					isVisible = true;
 				}
-				else if( (Stage.BLOCK_STATE.NONE == board[x, y].state) && (y<h-h_margin) )	//	マージンにはブランクを描画しない
+				else if( Stage.BLOCK_STATE.NONE == board[x, y].state )
 				{
-					//	block = Instantiate(boardBlank);
-					//	blocks[index] = block;
-					MeshQuad mesh = block.GetComponent<MeshQuad>();
-					Color[] colors = new Color[]
+					//	ブランクはマージン以外の領域に描画
+					if( y<h-h_margin )
 					{
-						new Color(1,1,1,1),
-						new Color(1,1,1,1),
-						new Color(1,1,1,1),
-						new Color(1,1,1,1),
-					};
-					mesh.updateUv(m_blankUvList);
-					mesh.updateColor(colors);
+						//	block = Instantiate(boardBlank);
+						//	blocks[index] = block;
+						MeshQuad mesh = block.GetComponent<MeshQuad>();
+						Color[] colors = new Color[]
+						{
+							new Color(1,1,1,1),
+							new Color(1,1,1,1),
+							new Color(1,1,1,1),
+							new Color(1,1,1,1),
+						};
+						mesh.updateUv(m_blankUvList);
+						mesh.updateColor(colors);
+						isVisible = true;
+					}
+					
+					//	マージンを超えたブランクは非表示
 				}
-				if(null != block)
+				if( true == isVisible)
 				{
 					block.transform.position = new Vector3(x + offset.x, y + offset.y, 0);
 					block.SetActive(true);
