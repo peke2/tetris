@@ -11,7 +11,7 @@ public class GenerationManager
 	const int GENERATION_NUMS = 20;     //	1世代の数
 	const int MAX_PLAY_NUMS = 20;       //	最大プレイ数
 
-	const int PROC_COUNT_PER_FRAME = 8; //	1フレームの処理回数
+	const int PROC_COUNT_PER_FRAME = 12; //	1フレームの処理回数
 
 	const int INHERIT_BOUND = 120;      //	交叉する間隔
 

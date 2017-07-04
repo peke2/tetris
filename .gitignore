@@ -5,3 +5,5 @@ Library/ShaderCache/*
 *.exe
 Temp
 TetrisDummy_Data
+WebGL
+Library/*cache*
