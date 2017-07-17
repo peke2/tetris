@@ -16,9 +16,9 @@ public class Tetris
 	public const int BOARD_SIZE_W = 10;	//	盤面の基本サイズ
 	public const int BOARD_SIZE_H = 20;
 
-	const int DROP_INTERVAL = 15;		//	落下間隔(フレーム数)
+	const int DROP_INTERVAL = 10;		//	落下間隔(フレーム数)
 	const int DROP_INTERVAL_REDUCE = 2;	//	落下間隔の削減値
-	const int FIX_INTERVAL = 30;		//	固定までの間隔(フレーム数)
+	const int FIX_INTERVAL = 20;		//	固定までの間隔(フレーム数)
 	int m_drop_interval;
 	//int m_fix_interval;	//固定までの時間だけど、今は使わないので外しておく
 
@@ -29,11 +29,36 @@ public class Tetris
 
 	bool m_is_game_over;
 
+    //  ライン消去タイミング用カウント
+    int m_frame_count = 0;
 
-	/**
+    //  消去したラインの情報を保持するクラス
+    public class ErasedLineInfo
+    {
+        int m_frame_count;  //  消去したフレーム数
+        int m_line_count;   //  消去したライン数
+
+        public ErasedLineInfo(int frame, int count)
+        {
+            m_frame_count = frame;
+            m_line_count = count;
+        }
+
+        public int FrameCount { get { return m_frame_count; } }
+        public int LineCount { get { return m_line_count; } }
+    }
+
+    List<ErasedLineInfo> m_erasedLineInfoList;
+
+    public List<ErasedLineInfo> getErasedLineInfoList()
+    {
+        return m_erasedLineInfoList;
+    }
+
+    /**
 	 *	通常のプレイ用インスタンスを作成
 	 */
-	public static Tetris CreateGamePlay()
+    public static Tetris CreateGamePlay()
 	{
 		Tetris tetris;
 		Tetrimino tetrimino = new Tetrimino();
@@ -94,7 +119,10 @@ public class Tetris
 
 		//	落下するブロックのIDを更新
 		updateDropTypeId();
-	}
+
+        //  消去情報を初期化
+        m_erasedLineInfoList = new List<ErasedLineInfo>();
+    }
 
 	// Update is called once per frame
 	public void update()
@@ -106,6 +134,8 @@ public class Tetris
 			int input_bit = m_input.getButtonBit();
 			int input_edge_bit = m_input.getButtonEdgeBit();
 			movement(input_bit, input_edge_bit);
+
+            m_frame_count++;
 		}
 	}
 
@@ -280,18 +310,34 @@ public class Tetris
 				//	落下ブロックを更新
 				updateDropTypeId();
 
-				//	盤面で1ライン埋まった行を取得
-				List<int> completedLine = m_stage.getCompletedLines();
-				//	対象の行を削除
-				m_stage.eraseLines(completedLine);
-			}
+                //  ライン消去処理
+                eraseLines();
+            }
 		}
 
 		m_tetrimino.setPos(posx, posy);
 	}
 
 
-	public Stage getStage()
+    /**
+     * ライン消去処理
+     */
+    void eraseLines()
+    {
+        //	盤面で1ライン埋まった行を取得
+        List<int> completedLines = m_stage.getCompletedLines();
+        //	対象の行を削除
+        m_stage.eraseLines(completedLines);
+
+        //  消去したラインがあれば情報を保持
+        if (completedLines.Count > 0)
+        {
+            m_erasedLineInfoList.Add(new ErasedLineInfo(m_frame_count, completedLines.Count));
+        }
+    }
+
+
+    public Stage getStage()
 	{
 		return m_stage;
 	}

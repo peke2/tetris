@@ -59,15 +59,19 @@ public class InputAuto:InputBase
 		};
 		GetInputPattern[] buttons = new GetInputPattern[]
 		{
+            /*
 			getInputPatternButtonA,
 			getInputPatternButtonB,
 			getInputPatternButtonLess,
-		};
+            */
+            getInputPatternButtonLess,
+        };
 		index = Random.Range(0, 3);
 		m_ControlProc = controls[index];
 
-		index = Random.Range(0, 3);
-		m_ButtonProc = buttons[index];
+		//index = Random.Range(0, 3);
+        index = 0;
+        m_ButtonProc = buttons[index];
 	}
 
 	public override void update()
@@ -110,10 +114,16 @@ public class InputAuto:InputBase
 		return bit;
 	}
 
-	/**
+    public override int getButtonEdgeBit()
+    {
+        return m_input_bit;
+    }
+
+
+    /**
 	 *	入力ビットリストを初期化
 	 */
-	public void initInputBitList()
+    public void initInputBitList()
 	{
 		m_list_index = 0;
 		m_autoBitList = new List<int>();
@@ -157,11 +167,11 @@ public class InputAuto:InputBase
 		int rate = getRate();
 		int bit = 0;
 
-		if(rate <= 30)
+		if(rate <= 10)
 		{
 			bit = MASK_LEFT;
 		}
-		else if(rate <= 40)
+		else if(rate <= 15)
 		{
 			bit = MASK_RIGHT;
 		}
@@ -179,11 +189,11 @@ public class InputAuto:InputBase
 		int rate = getRate();
 		int bit = 0;
 
-		if(rate <= 30)
+		if(rate <= 10)
 		{
 			bit = MASK_RIGHT;
 		}
-		else if(rate <= 30)
+		else if(rate <= 15)
 		{
 			bit = MASK_LEFT;
 		}
@@ -201,11 +211,11 @@ public class InputAuto:InputBase
 		int rate = getRate();
 		int bit = 0;
 
-		if(rate <= 90)
+		if(rate <= 96)
 		{
 			bit = 0;
 		}
-		else if(rate <= 95)
+		else if(rate <= 98)
 		{
 			bit = MASK_LEFT;
 		}
@@ -223,11 +233,11 @@ public class InputAuto:InputBase
 		int rate = getRate();
 		int bit = 0;
 
-		if(rate <= 20)
+		if(rate <= 10)
 		{
 			bit = MASK_BUTTON_A;
 		}
-		else if(rate <= 25)
+		else if(rate <= 15)
 		{
 			bit = MASK_BUTTON_B;
 		}
@@ -245,11 +255,11 @@ public class InputAuto:InputBase
 		int rate = getRate();
 		int bit = 0;
 
-		if(rate <= 20)
+		if(rate <= 10)
 		{
 			bit = MASK_BUTTON_B;
 		}
-		else if(rate <= 25)
+		else if(rate <= 15)
 		{
 			bit = MASK_BUTTON_A;
 		}
@@ -267,11 +277,11 @@ public class InputAuto:InputBase
 		int rate = getRate();
 		int bit = 0;
 
-		if(rate <= 90)
+		if(rate <= 96)
 		{
 			bit = 0;
 		}
-		else if(rate <= 95)
+		else if(rate <= 98)
 		{
 			bit = MASK_BUTTON_A;
 		}

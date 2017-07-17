@@ -8,292 +8,366 @@ using UnityEngine;
 public class GenerationManager
 {
 
-	const int GENERATION_NUMS = 20;     //	1世代の数
-	const int MAX_PLAY_NUMS = 20;       //	最大プレイ数
+    const int GENERATION_NUMS = 20;     //	1世代の数
+    const int MAX_PLAY_NUMS = 20;       //	最大プレイ数
 
-	const int PROC_COUNT_PER_FRAME = 12; //	1フレームの処理回数
+    const int PROC_COUNT_PER_FRAME = 20; //	1フレームの処理回数
 
-	const int INHERIT_BOUND = 120;      //	交叉する間隔
+    const int INHERIT_BOUND = 120;      //	交叉する間隔
 
-	int m_generation;   //	今の世代
-	int m_play_count;   //	世代のプレイカウント
+    int m_generation;   //	今の世代
+    int m_play_count;   //	世代のプレイカウント
 
-	List<List<int>> m_currentGenInputBitList;   //	現在の世代の入力情報格納リスト
-	List<List<int>> m_nextGenInputBitList;      //	次世代の入力情報格納リスト
+    List<List<int>> m_currentGenInputBitList;   //	現在の世代の入力情報格納リスト
+    List<List<int>> m_nextGenInputBitList;      //	次世代の入力情報格納リスト
 
-	List<Tetris> m_tetrisList;
+    List<List<Tetris.ErasedLineInfo>> m_erasedLineInfoList;   //  消去したラインの情報リスト
 
-	delegate State StateProcess();
+    List<Tetris> m_tetrisList;
 
-	StateProcess    m_stateProc;
+    delegate State StateProcess();
 
-	public enum State
-	{
-		None,   //	状態無し
-		Init,   //	初期化
-		Play,   //	プレイ中
-		Change, //	交代
-		ToNext, //	次の世代へ
-	}
+    StateProcess m_stateProc;
+
+    public enum State
+    {
+        None,   //	状態無し
+        Init,   //	初期化
+        Play,   //	プレイ中
+        Change, //	交代
+        ToNext, //	次の世代へ
+    }
 
 
-	public GenerationManager()
-	{
-		//	世代の操作情報保持リストを初期化
-		m_currentGenInputBitList = initGenerationList(false);
-		m_nextGenInputBitList = initGenerationList(true);   //	参照されるため、空の情報を追加する
+    public GenerationManager()
+    {
+        //	世代の操作情報保持リストを初期化
+        m_currentGenInputBitList = initGenerationList(false);
+        m_nextGenInputBitList = initGenerationList(true);   //	参照されるため、空の情報を追加する
 
-		//	初期化から開始
-		m_stateProc = procStateInit;
-	}
+        m_erasedLineInfoList = new List<List<Tetris.ErasedLineInfo>>();
 
-	public State update()
-	{
-		//全部ゲームオーバーか？
-		//必要な個体数の評価が済んだか？
-		//次の世代を生成
+        //	初期化から開始
+        m_stateProc = procStateInit;
+    }
 
-		State state;
-		state = m_stateProc();
-		return state;
-	}
+    public State update()
+    {
+        //全部ゲームオーバーか？
+        //必要な個体数の評価が済んだか？
+        //次の世代を生成
 
-	State procStateBlank()
-	{
-		return State.None;
-	}
+        State state;
+        state = m_stateProc();
+        return state;
+    }
 
-	/**
+    State procStateBlank()
+    {
+        return State.None;
+    }
+
+    /**
 	 * 初期化
 	 */
-	State procStateInit()
-	{
-		m_generation = 0;
-		m_play_count = 0;
+    State procStateInit()
+    {
+        m_generation = 0;
+        m_play_count = 0;
 
-		m_tetrisList = createGeneration();
-		m_stateProc = procStateUpdate;
+        m_tetrisList = createGeneration();
+        m_stateProc = procStateUpdate;
 
-		return State.Init;
-	}
+        return State.Init;
+    }
 
-	/**
+    /**
 	 * 更新
 	 */
-	State procStateUpdate()
-	{
-		for(int i = 0; i<PROC_COUNT_PER_FRAME; i++)
-		{
-			foreach(Tetris tetris in m_tetrisList)
-			{
-				tetris.update();
-			}
-		}
+    State procStateUpdate()
+    {
+        for (int i = 0; i < PROC_COUNT_PER_FRAME; i++)
+        {
+            foreach (Tetris tetris in m_tetrisList)
+            {
+                tetris.update();
+            }
+        }
 
-		if(true == isAllGameOver())
-		{
-			m_stateProc = procStateChange;
-		}
+        if (true == isAllGameOver())
+        {
+            m_stateProc = procStateChange;
+        }
 
-		return State.Play;
-	}
+        return State.Play;
+    }
 
-	/**
+    /**
 	 * 盤面の変更
 	 */
-	State procStateChange()
-	{
-		m_play_count++;
-		int nums = m_play_count * MAX_PLAY_NUMS;
+    State procStateChange()
+    {
+        m_play_count++;
+        int nums = m_play_count * MAX_PLAY_NUMS;
 
-		//	操作情報を保持
-		pushInputBitList();
+        //	操作情報を保持
+        pushGenerationInfoList();
 
-		//	1世代分の実行数に達したら次の世代へ
-		if(GENERATION_NUMS <= nums)
-		{
-			//	操作の遺伝
-			inheritGeneration();
+        //	1世代分の実行数に達したら次の世代へ
+        if (GENERATION_NUMS <= nums)
+        {
+            //	操作の遺伝
+            inheritGeneration();
 
-			m_play_count = 0;
-			m_generation++;
-		}
+            m_play_count = 0;
+            m_generation++;
+        }
 
-		m_tetrisList = createGeneration();
-		m_stateProc = procStateUpdate;
+        m_tetrisList = createGeneration();
+        m_stateProc = procStateUpdate;
 
-		return State.Change;
-	}
+        return State.Change;
+    }
 
-	/**
+    /**
 	 *	世代管理リストを初期化
 	 */
-	List<List<int>> initGenerationList(bool isAddEmpty = true)
-	{
-		List<List<int>> list = new List<List<int>>();
+    List<List<int>> initGenerationList(bool isAddEmpty = true)
+    {
+        List<List<int>> list = new List<List<int>>();
 
-		if(true == isAddEmpty)
-		{
-			for(int i = 0; i<GENERATION_NUMS; i++)
-			{
-				//	操作用データ(世代交代していないので空のデータ)
-				list.Add(new List<int>());
-			}
-		}
-		return list;
-	}
+        if (true == isAddEmpty)
+        {
+            for (int i = 0; i < GENERATION_NUMS; i++)
+            {
+                //	操作用データ(世代交代していないので空のデータ)
+                list.Add(new List<int>());
+            }
+        }
+        return list;
+    }
 
 
-	/**
+    /**
 	 *	世代を作成
 	 */
-	List<Tetris> createGeneration()
-	{
-		int index_offset;
+    List<Tetris> createGeneration()
+    {
+        int index_offset;
 
-		index_offset = m_play_count * MAX_PLAY_NUMS;
+        index_offset = m_play_count * MAX_PLAY_NUMS;
 
-		List<Tetris> tetrisList = new List<Tetris>();
+        List<Tetris> tetrisList = new List<Tetris>();
 
-		List<int> bitList;
-		Tetris tetris;
+        List<int> bitList;
+        Tetris tetris;
 
-		//	自動
-		for(int i = 0; i<MAX_PLAY_NUMS; i++)
-		{
-			bitList = m_nextGenInputBitList[i + index_offset];
-			if(0 == bitList.Count) bitList = null;
-			tetris = Tetris.CreateGameAutoPlay(bitList);
-			tetrisList.Add(tetris);
-		}
+        //	自動
+        for (int i = 0; i < MAX_PLAY_NUMS; i++)
+        {
+            bitList = m_nextGenInputBitList[i + index_offset];
+            if (0 == bitList.Count) bitList = null;
+            tetris = Tetris.CreateGameAutoPlay(bitList);
+            tetrisList.Add(tetris);
+        }
 
-		return tetrisList;
-	}
+        return tetrisList;
+    }
 
 
-	/**
-	 *	現在の操作情報を残す
+    /**
+	 *	現在の世代の情報を残す
 	 */
-	void pushInputBitList()
-	{
-		foreach(Tetris tetris in m_tetrisList)
-		{
-			InputAuto inp;
-			inp = (InputAuto)tetris.getInput();
+    void pushGenerationInfoList()
+    {
+        foreach (Tetris tetris in m_tetrisList)
+        {
+            InputAuto inp;
+            inp = (InputAuto)tetris.getInput();
 
-			List<int> list = new List<int>(inp.getInputBitList());
+            List<int> list = new List<int>(inp.getInputBitList());
 
-			//[todo] クラスの参照先が無い場合の対応を入れる
-			//ここに来るのは自動入力だけの予定なので放置でも構わない
-			//ユーザーの入力には参照位置の管理は含まれないのでキャストしたらメソッドは無いはず
-			int index = inp.getListIndex();
+            //[todo] クラスの参照先が無い場合の対応を入れる
+            //ここに来るのは自動入力だけの予定なので放置でも構わない
+            //ユーザーの入力には参照位置の管理は含まれないのでキャストしたらメソッドは無いはず
+            int index = inp.getListIndex();
 
-			//	元の入力情報よりも参照位置が前ならば、後ろの情報をカット
-			if( list.Count > index )
-			{
-				list.RemoveRange(index, list.Count-index);
-			}
+            //	元の入力情報よりも参照位置が前ならば、後ろの情報をカット
+            if (list.Count > index)
+            {
+                list.RemoveRange(index, list.Count - index);
+            }
 
-			m_currentGenInputBitList.Add(list);
-		}
-	}
+            m_currentGenInputBitList.Add(list);
 
+            //  消去情報も合わせて保持
+            m_erasedLineInfoList.Add(tetris.getErasedLineInfoList());
+        }
+    }
 
-	/**
+    //  ソート用
+    class SortInfo
+    {
+        public List<int> inputList { get; private set; }
+        public List<Tetris.ErasedLineInfo> erasedLineList { get; private set; }
+
+        int m_score;
+        public int Score { get { return m_score; } }
+
+        public SortInfo(List<int> input, List<Tetris.ErasedLineInfo> erased)
+        {
+            inputList = input;
+            erasedLineList = erased;
+
+            calcScore();
+        }
+
+        void calcScore()
+        {
+            int total = 0;
+            foreach (Tetris.ErasedLineInfo info in erasedLineList)
+            {
+                total += info.LineCount;
+            }
+
+            m_score = total;
+        }
+
+        /**
+         * 残す部分を指定して入力情報リストの末尾をカット
+         */
+        public void cutInputListTail(int headnum)
+        {
+            inputList = inputList.GetRange(0, headnum);
+        }
+    }
+
+    /**
 	 *	世代を引き継ぐ
 	 */
-	void inheritGeneration()
-	{
-		List<List<int>> list = new List<List<int>>();
+    void inheritGeneration()
+    {
+        //List<List<int>> list = new List<List<int>>();
+        List<SortInfo> list = new List<SortInfo>();
 
-		//	現在の入力情報を取得
-		for(int i=0; i<GENERATION_NUMS; i++)
-		{
-			list.Add(m_currentGenInputBitList[i]);
-		}
 
-		//	進行の大きい順にリストをソート
-		list.Sort((List<int> a, List<int> b) => b.Count - a.Count);
+        //	現在の入力情報で最大のカウントを取得
+        int max_line_count = 0;
+        for (int i = 0; i < GENERATION_NUMS; i++)
+        {
+            int count = m_currentGenInputBitList[i].Count;
+            if (count > max_line_count) max_line_count = count;
+        }
 
-		Debug.Log("---- 世代["+m_generation+"] ----");
-		Debug.Log("最大手数="+list[0].Count);
+        //	現在の入力情報を取得
+        for (int i = 0; i < GENERATION_NUMS; i++)
+        {
+            SortInfo sinfo = new SortInfo(m_currentGenInputBitList[i], m_erasedLineInfoList[i]);
+            list.Add(sinfo);
+        }
 
-		//	操作リストをクリア
-		m_currentGenInputBitList.Clear();
-		m_nextGenInputBitList.Clear();
+        //	スコアの大きい順にリストをソート
+        list.Sort((SortInfo a, SortInfo b) => b.Score - a.Score);
 
-		int bound = INHERIT_BOUND;
-		List<List<int>> calcResultList;
+        //  最終消去ラインまでの手順を残す
+        int last_erased_line = 0;
+        int line_count = list[0].erasedLineList.Count;
+        if (line_count > 0)
+        {
+            last_erased_line = list[0].erasedLineList[line_count - 1].FrameCount;
+        }
 
-		//	1位と2位、2位と3位、3位と4位、4位と5位で交叉
-		//	1位の動きが残りすぎるので他の順位も残るようにする
-		//	この先の選択で重複するけど、1位以外の発生が増えるので良いかも？
-		for(int i=0; i<4; i++)
-		{
-			calcResultList = calcCrossover(list[i], list[i+1], bound);
-			m_nextGenInputBitList.Add(calcResultList[0]);
-		}
+        Debug.Log("---- 世代[" + m_generation + "] ----");
+        Debug.Log("最大スコア=" + list[0].Score);
+        Debug.Log("最終消去ライン=" + last_erased_line);
 
-		//	1位の突然変異
-		//	5%の部分を変異
-		m_nextGenInputBitList.Add( mutation(list[0], 5) );
+        //	操作リストをクリア
+        m_currentGenInputBitList.Clear();
+        m_nextGenInputBitList.Clear();
 
-		//	ランダムで選択した2つを交叉 → 4つ
-		//	1位は除く
-		List<int> comb = new List<int>();
-		List<List<int>> combList;
-		for(int i=1; i<GENERATION_NUMS; i++)
-		{
-			comb.Add(i);
-		}
-		combList = GenerationManager.createCombination(comb, 2);	//	2つの組み合わせを列挙
+        m_erasedLineInfoList.Clear();
 
-		for(int i=0; i<4; i++)
-		{
-			int index;
-			index = Random.Range(0, combList.Count);
-			List<int> targetIndices = combList[index];
-			combList.RemoveAt(index);
+        int bound = INHERIT_BOUND;
+        List<List<int>> calcResultList;
 
-			calcResultList = calcCrossover(list[targetIndices[0]], list[targetIndices[1]], bound);
-			m_nextGenInputBitList.Add(calcResultList[0]);	//	残すのは交叉後の1つだけ
-			//m_nextGenInputBitList.Add(calcResultList[1]);
-		}
+        //  最終消去位置までの手順があるならばそこまでは残す
+        if (last_erased_line > 0)
+        {
+            bound = last_erased_line;
+            //  最終ラインまで残して後は消す
+            list[0].cutInputListTail(bound);
+        }
 
-		//	ランダムで選択したものを突然変異 → 1つ
-		//	1位以外
-		//	5%の部分を変異
-		m_nextGenInputBitList.Add(mutation(list[Random.Range(1, list.Count)], 5));
+        //	1位と2位、2位と3位、3位と4位、4位と5位で交叉
+        //	1位の動きが残りすぎるので他の順位も残るようにする
+        //	この先の選択で重複するけど、1位以外の発生が増えるので良いかも？
+        for (int i = 0; i < 4; i++)
+        {
+            calcResultList = calcCrossover(list[i].inputList, list[i + 1].inputList, bound);
+            m_nextGenInputBitList.Add(calcResultList[0]);
+        }
 
-		//	ランダムで5つ選択してそのまま次へ持ち越し
-		List<int> topRemovedList = new List<int>();
-		List<int> randomSelected;
+        //	1位の突然変異
+        //	10%の部分を変異
+        m_nextGenInputBitList.Add(mutation(list[0].inputList, 10));
 
-		//	1位は他と交叉しているので、そのまま次に残さない
-		for(int i=1; i<list.Count; i++)
-		{
-			topRemovedList.Add(i);
-		}
-		randomSelected = selectRandom(topRemovedList, 5);
+        //	ランダムで選択した2つを交叉 → 4つ
+        //	1位は除く
+        List<int> comb = new List<int>();
+        List<List<int>> combList;
+        for (int i = 1; i < GENERATION_NUMS; i++)
+        {
+            comb.Add(i);
+        }
+        combList = GenerationManager.createCombination(comb, 2);    //	2つの組み合わせを列挙
 
-		foreach(int i in randomSelected)
-		{
-			m_nextGenInputBitList.Add(new List<int>(list[i]));
-		}
+        for (int i = 0; i < 4; i++)
+        {
+            int index;
+            index = Random.Range(0, combList.Count);
+            List<int> targetIndices = combList[index];
+            combList.RemoveAt(index);
 
-		//	残り5つは最初から
-		for(int i=0; i<5; i++)
-		{
-			m_nextGenInputBitList.Add(new List<int>());
-		}
+            calcResultList = calcCrossover(list[targetIndices[0]].inputList, list[targetIndices[1]].inputList, bound);
+            m_nextGenInputBitList.Add(calcResultList[0]);   //	残すのは交叉後の1つだけ
+                                                            //m_nextGenInputBitList.Add(calcResultList[1]);
+        }
 
-		Debug.Assert(m_nextGenInputBitList.Count == GENERATION_NUMS);
-	}
+        //	ランダムで選択したものを突然変異 → 1つ
+        //	1位以外
+        //	5%の部分を変異
+        m_nextGenInputBitList.Add(mutation(list[Random.Range(1, list.Count)].inputList, 5));
 
-	/**
+        //	ランダムで5つ選択してそのまま次へ持ち越し
+        List<int> topRemovedList = new List<int>();
+        List<int> randomSelected;
+
+        //	1位は他と交叉しているので、そのまま次に残さない
+        for (int i = 1; i < list.Count; i++)
+        {
+            topRemovedList.Add(i);
+        }
+        randomSelected = selectRandom(topRemovedList, 5);
+
+        foreach (int i in randomSelected)
+        {
+            m_nextGenInputBitList.Add(new List<int>(list[i].inputList));
+        }
+
+        //	残り5つは最初から
+        for (int i = 0; i < 5; i++)
+        {
+            m_nextGenInputBitList.Add(new List<int>());
+        }
+
+        Debug.Assert(m_nextGenInputBitList.Count == GENERATION_NUMS);
+    }
+
+
+    /**
 	 *	指定のリストどうしを交叉
 	 */
-	static public List<List<int>> calcCrossover(List<int> listA, List<int> listB, int bound=600)
+    static public List<List<int>> calcCrossover(List<int> listA, List<int> listB, int bound=600)
 	{
 		List<List<int>> list = new List<List<int>>();
 
